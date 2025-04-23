@@ -35,6 +35,7 @@ export default function Login() {
   const { loading, error } = useSelector((state: RootState) => state.auth);
   const router = useRouter();
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [errorFromBack, setErrorFromBack] = useState("");
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-white">
@@ -51,8 +52,14 @@ export default function Login() {
               const result = await dispatch(loginUser(values));
 
               if (loginUser.fulfilled.match(result)) {
-                alert("Login successful!");
-                router.push("/");
+                const { is_active } = result.payload;
+                if (is_active) {
+                  router.push("/");
+                } else {
+                  router.push("/complete-registration");
+                }
+              } else {
+                setErrorFromBack("Invalid credentials. Please try again.");
               }
               setSubmitting(false);
             }}
@@ -121,6 +128,7 @@ export default function Login() {
                 />
 
                 {error && <p className="text-red-500 text-sm">{error}</p>}
+                <p className="text-red-500 text-sm">{errorFromBack}</p>
               </Form>
             )}
           </Formik>
@@ -138,12 +146,14 @@ export default function Login() {
           <div className="border-t h-[1px] w-full"></div>
           <div className="flex flex-col items-center gap-3">
             <span className="text-xs text-lightgray">Or continue with</span>
-            <Image
-              width={40}
-              height={40}
-              src="/assets/img/login/google.svg"
-              alt="google"
-            />
+            <Link href="https://web-production-f0f5.up.railway.app/api/v1/auth/google/login">
+              <Image
+                width={40}
+                height={40}
+                src="/assets/img/login/google.svg"
+                alt="google"
+              />
+            </Link>
           </div>
         </div>
       </Container>

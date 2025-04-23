@@ -1,35 +1,37 @@
 "use client";
-
-import { useState } from "react";
 import { Plus } from "lucide-react";
+import React from "react";
 
 type UploadedImage = {
   file: File;
-  preview: string;
 };
 
-export default function PhotoUpload() {
-  const [cover, setCover] = useState<UploadedImage | null>(null);
-  const [images, setImages] = useState<UploadedImage[]>([]);
+type PhotoUploadProps = {
+  cover: UploadedImage | null;
+  images: UploadedImage[];
+  onCoverChange: (cover: UploadedImage) => void;
+  onImagesChange: (imgs: UploadedImage[]) => void;
+};
 
+export default function PhotoUpload({
+  cover,
+  images,
+  onCoverChange,
+  onImagesChange,
+}: PhotoUploadProps) {
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     type: "cover" | "extra",
   ) => {
     const files = Array.from(e.target.files || []);
-
     files.forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const newImage = { file, preview: reader.result as string };
+      const newImage = { file };
 
-        if (type === "cover") {
-          setCover(newImage);
-        } else {
-          setImages((prev) => [...prev, newImage]);
-        }
-      };
-      reader.readAsDataURL(file);
+      if (type === "cover") {
+        onCoverChange(newImage);
+      } else {
+        onImagesChange([...images, newImage]);
+      }
     });
   };
 
@@ -38,9 +40,9 @@ export default function PhotoUpload() {
       {/* Cover photo */}
       <label className="w-full h-40 border-2 bg-gradient border-dashed rounded-lg flex items-center justify-center cursor-pointer">
         <div className="bg-white w-full h-full rounded-lg flex items-center justify-center">
-          {cover ? (
+          {cover?.file ? (
             <img
-              src={cover.preview}
+              src={URL.createObjectURL(cover.file)}
               alt="Cover"
               className="w-full h-full object-cover rounded-xl"
             />
@@ -70,14 +72,13 @@ export default function PhotoUpload() {
             <div className="bg-white w-full h-full rounded-lg flex items-center justify-center">
               {img ? (
                 <img
-                  src={img.preview}
+                  src={URL.createObjectURL(img.file)}
                   alt={`Preview ${index}`}
                   className="w-full h-full object-cover rounded-xl"
                 />
               ) : (
                 <Plus className="text-purple-700" size={24} />
               )}
-
               <input
                 type="file"
                 accept="image/*"

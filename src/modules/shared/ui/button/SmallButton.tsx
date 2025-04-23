@@ -4,25 +4,27 @@ interface ButtonProps {
   buttonType?: "button" | "submit" | "reset";
   state?: boolean;
   buttonText: string;
+  size: string;
   onClick?: () => void;
 }
 
-const Button: React.FC<ButtonProps> = ({
+const SmallButton: React.FC<ButtonProps> = ({
   buttonType = "submit",
   state = false,
   buttonText,
+  size = "",
   onClick,
 }) => {
   return (
     <button
+      onClick={onClick}
       type={buttonType}
       disabled={state}
-      onClick={onClick}
-      className={`w-full bg-gradient rounded-lg text-white text-sm p-3 ${state ? "opacity-50 cursor-not-allowed" : ""}`}
+      className={`bg-gradient rounded-lg text-white ${size} text-xs ${state ? "opacity-50 cursor-not-allowed" : ""}`}
     >
       {buttonText}
     </button>
   );
 };
 
-export default Button;
+export default SmallButton;

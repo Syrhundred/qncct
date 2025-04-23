@@ -5,6 +5,7 @@ import { UserLocationState } from "@/shared/types/types";
 const initialState: UserLocationState = {
   city: null,
   coords: null,
+  error: null,
 };
 
 const userLocationSlice = createSlice({
@@ -14,6 +15,7 @@ const userLocationSlice = createSlice({
     setUserLocation(state, action: PayloadAction<UserLocationState>) {
       state.city = action.payload.city;
       state.coords = action.payload.coords;
+      state.error = action.payload.error ?? null;
     },
   },
 });

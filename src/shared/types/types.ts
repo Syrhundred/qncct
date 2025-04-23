@@ -1,6 +1,7 @@
 export interface UserLocationState {
   city: string | null;
   coords: { lat: number; lng: number } | null;
+  error?: string | null; // 👈 добавляем
 }
 
 export interface AuthState {
@@ -15,12 +16,35 @@ export interface AuthState {
   error: string | null;
 }
 
-export interface Event {
+export interface IEvent {
   id: string;
   name: string;
-  category: string;
-  locationName: string;
-  locationCoordinates: [number, number];
   date: string;
-  time: string;
+  address: string;
+  latitude: number;
+  description: string;
+  longitude: number;
+  category: {
+    id: string;
+    name: string;
+  };
+  created_by: {
+    id: string;
+    email: string;
+    phone_number: string;
+    role: string;
+    is_active: boolean;
+    profile: {
+      avatar_url: string;
+      username: string;
+      interests: string[];
+    };
+  };
+  images: [
+    {
+      id: string;
+      url: string;
+      is_mine: boolean;
+    },
+  ];
 }

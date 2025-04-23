@@ -12,6 +12,8 @@ const config: Config = {
       colors: {
         background: "#f1f1f1",
         lightgray: "#888888",
+        "primary-purple": "#641BFE",
+        secondary: "20222C",
       },
       backgroundImage: {
         gradient:

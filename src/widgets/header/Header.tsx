@@ -13,8 +13,8 @@ export default function Header() {
         <div className="flex flex-col gap-3">
           <div className="flex justify-between items-center mt-3">
             <div className="flex flex-col">
-              <span>Location</span>
-              <span className="text-lightgray flex items-center gap-1">
+              <p>Location</p>
+              <span className="flex items-center gap-1 text-lightgray">
                 <MapPin size={20} color="#25131A" />
                 Kazakhstan{city ? `, ${city}` : ""}
               </span>

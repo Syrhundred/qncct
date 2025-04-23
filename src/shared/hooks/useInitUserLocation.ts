@@ -1,9 +1,10 @@
 import { useEffect } from "react";
-import { useAppDispatch } from "@/shared/lib/storeHooks";
 import { setUserLocation } from "@/store/userLocationSlice";
+import { AppDispatch } from "@/store";
+import { useDispatch } from "react-redux";
 
 export const useInitUserLocation = () => {
-  const dispatch = useAppDispatch();
+  const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(async (position) => {

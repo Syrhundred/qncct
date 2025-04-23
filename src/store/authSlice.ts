@@ -24,6 +24,7 @@ export const verifyToken = createAsyncThunk(
     const data = await res.json();
     if (!res.ok) throw new Error(data.message);
     localStorage.setItem("access_token", data.access_token);
+    localStorage.setItem("refresh_token", data.refresh_token);
 
     return data;
   },
@@ -101,9 +102,11 @@ export const loginUser = createAsyncThunk(
       });
 
       const data = await res.json();
+
       if (!res.ok) throw new Error(data.message);
 
       localStorage.setItem("access_token", data.access_token);
+      localStorage.setItem("refresh_token", data.refresh_token);
       return data;
     } catch (error: any) {
       return rejectWithValue(error.message);
@@ -154,7 +157,7 @@ export const completeRegistration = createAsyncThunk(
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
 
-      return data; // ✅ Теперь возвращаем `user`
+      return data; // ✅ Теперь возвращаем `profile`
     } catch (error: any) {
       return rejectWithValue(error.message);
     }
@@ -222,6 +225,19 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(loginUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loginUser.fulfilled, (state, action: PayloadAction<any>) => {
+        state.loading = false;
+        state.token = action.payload.access_token;
+        state.user = action.payload.user; // если сервер возвращает `profile`
+      })
+      .addCase(loginUser.rejected, (state, action: PayloadAction<any>) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
       .addCase(verifyPhone.pending, (state) => {
         state.loading = true;
         state.error = null;

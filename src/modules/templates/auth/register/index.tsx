@@ -11,7 +11,6 @@ import Button from "@/modules/shared/ui/button/Button";
 import Link from "next/link";
 
 const validationSchema = Yup.object({
-  // name: Yup.string().required("Full name is required"),
   email: Yup.string()
     .email("Invalid email format")
     .required("Email is required"),

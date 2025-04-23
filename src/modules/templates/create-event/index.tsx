@@ -4,7 +4,6 @@ import { Container } from "@/modules/shared/ui/core/Container";
 import GoBackButton from "@/modules/shared/ui/goback-button/GoBackButton";
 import PhotoUpload from "@/shared/ui/photoupload/PhotoUpload";
 import LocationAutocompleteYandex from "@/shared/ui/map/LocationAutocompleteYandex";
-
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { useEffect, useState } from "react";
@@ -16,12 +15,20 @@ import dayjs, { Dayjs } from "dayjs";
 import utc from "dayjs/plugin/utc";
 import "dayjs/locale/ru";
 import Button from "@/modules/shared/ui/button/Button";
-import "dayjs/locale/de";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
 import { fetchCategories } from "@/store/categorySlice";
 import { createEvent } from "@/store/eventSlice";
 import { FormikTimePicker } from "@/widgets/create-event/FormikTimePicker";
+import "dayjs/plugin/utc";
+import { useRouter } from "next/navigation";
+
+dayjs.extend(utc);
+dayjs.locale("ru");
+
+export type UploadedImage = {
+  file: File;
+};
 
 export default function CreateEvent() {
   const dispatch = useDispatch<AppDispatch>();
@@ -29,12 +36,10 @@ export default function CreateEvent() {
     (state: RootState) => state.category.categories,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  dayjs.extend(utc);
-
+  const router = useRouter();
   useEffect(() => {
     dispatch(fetchCategories());
-  }, []);
+  }, [dispatch]);
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -43,22 +48,27 @@ export default function CreateEvent() {
           <GoBackButton />
         </div>
         <h2 className="text-center my-7">Create Event</h2>
-        <PhotoUpload />
 
         <Formik
           initialValues={{
-            // banner: "",
-            // images: [],
+            cover: null as UploadedImage | null,
+            images: [] as UploadedImage[],
             name: "",
             category_id: "",
             address: "",
-            latitude: 0 as number,
-            longitude: 0 as number,
+            latitude: 0,
+            longitude: 0,
             date: null as Dayjs | null,
             time: null as Dayjs | null,
             description: "",
           }}
           validationSchema={Yup.object({
+            cover: Yup.object({ file: Yup.mixed().required() }).required(
+              "Cover is required",
+            ),
+            images: Yup.array().of(
+              Yup.object({ file: Yup.mixed().required() }),
+            ),
             name: Yup.string().required("Required"),
             category_id: Yup.string().required("Required"),
             address: Yup.string().required("Select location"),
@@ -78,24 +88,36 @@ export default function CreateEvent() {
                     .set("millisecond", 0)
                     .utc()
                     .toISOString()
-                : null;
+                : "";
 
-            const payload = {
-              name: values.name,
-              category_id: values.category_id,
-              address: values.address,
-              latitude: values.latitude,
-              longitude: values.longitude,
-              description: values.description,
-              date: combinedDateTime,
-            };
-
-            dispatch(createEvent(payload));
+            dispatch(
+              createEvent({
+                banner: values.cover!.file,
+                images: values.images.map((img) => img.file),
+                name: values.name,
+                category_id: values.category_id,
+                address: values.address,
+                latitude: values.latitude,
+                longitude: values.longitude,
+                date: combinedDateTime,
+                description: values.description,
+              }),
+            );
             setTimeout(() => setIsSubmitting(false), 1500);
+            router.push("/");
           }}
         >
           {({ setFieldValue, values, touched, errors }) => (
             <Form className="flex flex-col gap-5 my-6">
+              <PhotoUpload
+                cover={values.cover}
+                images={values.images}
+                onCoverChange={(newCover) => setFieldValue("cover", newCover)}
+                onImagesChange={(newImages) =>
+                  setFieldValue("images", newImages)
+                }
+              />
+
               {/* Name */}
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-bold">Event name</label>
@@ -130,7 +152,6 @@ export default function CreateEvent() {
                     </option>
                   ))}
                 </select>
-
                 {touched.category_id && errors.category_id && (
                   <span className="text-red-500 text-xs">
                     {errors.category_id}
@@ -147,11 +168,10 @@ export default function CreateEvent() {
                   onSelect={(place) => {
                     const fullAddress = `${place.name}, ${place.description}`;
                     setFieldValue("address", fullAddress);
-                    setFieldValue("latitude", place.coordinates[1]); // lat
-                    setFieldValue("longitude", place.coordinates[0]); // lng
+                    setFieldValue("latitude", place.coordinates[1]);
+                    setFieldValue("longitude", place.coordinates[0]);
                   }}
                 />
-
                 {touched.address && errors.address && (
                   <Typography variant="caption" color="error">
                     {errors.address}
@@ -162,11 +182,11 @@ export default function CreateEvent() {
               {/* Date & Time */}
               <LocalizationProvider
                 dateAdapter={AdapterDayjs}
-                adapterLocale={"ru"}
+                adapterLocale="ru"
               >
                 <div className="flex gap-3">
                   <div className="flex flex-col gap-3">
-                    <Typography className="text-sm font-bold ">
+                    <Typography className="text-sm font-bold">
                       Select Date
                     </Typography>
                     <DatePicker

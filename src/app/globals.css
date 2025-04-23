@@ -18,8 +18,15 @@ h2 {
     font-weight: 500;
 }
 
+h3 {
+    font-size: 16px;
+    font-weight: 400;
+}
+
 .mapboxgl-canvas {
     width: 100% !important;
     height: 100% !important;
     display: block;
 }
+
+
