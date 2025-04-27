@@ -82,7 +82,7 @@ export default function EventCard({ event }: { event: IEvent }) {
                   ? event.created_by?.profile?.avatar_url
                   : "/assets/img/event-card/avatar.svg"
               }
-              className="rounded-[1/2] w-5"
+              className="rounded-full w-5 h-5"
               alt="avatar"
             />
             {event.created_by?.profile?.username}

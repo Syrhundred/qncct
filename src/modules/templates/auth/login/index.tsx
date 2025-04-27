@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { useDispatch, useSelector } from "react-redux";
@@ -32,10 +32,23 @@ const validationSchema = Yup.object({
 
 export default function Login() {
   const dispatch = useDispatch<AppDispatch>();
-  const { loading, error } = useSelector((state: RootState) => state.auth);
+  const { loading } = useSelector((state: RootState) => state.auth);
+  const { error, isAuth, user } = useSelector((state: RootState) => state.auth);
   const router = useRouter();
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [errorFromBack, setErrorFromBack] = useState("");
+  const isActive = localStorage.getItem("is_active");
+
+  useEffect(() => {
+    console.log(isAuth, user);
+    if (isAuth) {
+      if (isActive === "true") {
+        router.replace("/");
+      } else {
+        router.push("/complete-registration");
+      }
+    }
+  }, [isAuth, user, router]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-white">
@@ -51,16 +64,10 @@ export default function Login() {
             onSubmit={async (values, { setSubmitting }) => {
               const result = await dispatch(loginUser(values));
 
-              if (loginUser.fulfilled.match(result)) {
-                const { is_active } = result.payload;
-                if (is_active) {
-                  router.push("/");
-                } else {
-                  router.push("/complete-registration");
-                }
-              } else {
+              if (!loginUser.fulfilled.match(result)) {
                 setErrorFromBack("Invalid credentials. Please try again.");
               }
+
               setSubmitting(false);
             }}
           >

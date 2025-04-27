@@ -3,6 +3,7 @@ import { MapPin } from "lucide-react";
 import Image from "next/image";
 import SearchBar from "@/widgets/header/searchbar/SearchBar";
 import { useAppSelector } from "@/shared/lib/storeHooks";
+import InterestsFilter from "@/widgets/header/InterestsFilter";
 
 export default function Header() {
   const city = useAppSelector((state) => state.userLocation.city);

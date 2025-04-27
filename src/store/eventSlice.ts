@@ -22,6 +22,16 @@ interface EventState {
   error: string | null;
 }
 
+interface FetchEventsParams {
+  date_filter?: "today" | "tomorrow" | "this_week";
+  custom_date?: string;
+  lat?: number;
+  lon?: number;
+  radius_km?: number;
+  interests?: string[];
+  search?: string;
+}
+
 const initialState: EventState = {
   events: [],
   selectedEvent: null,
@@ -67,11 +77,19 @@ export const createEvent = createAsyncThunk<IEvent, CreateEventPayload>(
   },
 );
 
-export const fetchEvents = createAsyncThunk<IEvent[], void>(
+export const fetchEvents = createAsyncThunk<IEvent[], FetchEventsParams | void>(
   "event/fetchEvents",
-  async () => {
+  async (params) => {
     try {
-      const res = await fetch(`${baseUrl}/api/v1/events/`);
+      const queryString = params
+        ? "?" +
+          new URLSearchParams({
+            ...params,
+            interests: params.interests?.join(",") || "", // массив -> строка
+          } as any).toString()
+        : "";
+
+      const res = await fetch(`${baseUrl}/api/v1/events/filter${queryString}`);
       const data = await res.json();
 
       return data as IEvent[];

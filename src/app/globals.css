@@ -29,4 +29,14 @@ h3 {
     display: block;
 }
 
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+/* Скрыть полосу прокрутки для IE, Edge и Firefox */
+.no-scrollbar {
+    -ms-overflow-style: none;  /* IE и Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
 

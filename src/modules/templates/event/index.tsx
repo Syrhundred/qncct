@@ -130,7 +130,7 @@ export default function Event() {
                   event.created_by?.profile?.avatar_url ||
                   "/assets/img/event-card/avatar.svg"
                 }
-                className="rounded-full w-5"
+                className="rounded-full w-5 h-5"
                 alt="avatar"
               />
               <p>

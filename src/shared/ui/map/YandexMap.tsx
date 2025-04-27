@@ -17,18 +17,24 @@ const LazyMap = dynamic(() => import("./GeocodeMap"), {
 interface LazyYandexMapProps {
   containerSize: string;
   currentEvent?: [number, number];
+  selectedInterests?: string[];
 }
 
 export default function LazyYandexMap({
   containerSize,
   currentEvent,
+  selectedInterests,
 }: LazyYandexMapProps) {
   const apiKey = process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY;
 
   return (
     <YMaps query={{ apikey: apiKey }}>
       <Suspense>
-        <LazyMap containerSize={containerSize} currentEvent={currentEvent} />
+        <LazyMap
+          containerSize={containerSize}
+          currentEvent={currentEvent}
+          selectedInterests={selectedInterests}
+        />
       </Suspense>
     </YMaps>
   );

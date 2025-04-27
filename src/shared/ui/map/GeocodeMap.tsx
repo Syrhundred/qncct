@@ -22,9 +22,11 @@ interface IMapClickEvent {
 export default function GeocodeMap({
   containerSize,
   currentEvent,
+  selectedInterests,
 }: {
   containerSize: string;
   currentEvent?: [number, number];
+  selectedInterests?: string[];
 }) {
   const ymaps = useYMaps(["geocode"]);
   const mapRef = useRef<any>(null);
@@ -55,10 +57,13 @@ export default function GeocodeMap({
     }
   }, [userCoords]);
 
-  // Фетчим ивенты при монтировании
   useEffect(() => {
-    dispatch(fetchEvents());
-  }, [dispatch]);
+    if (selectedInterests && selectedInterests.length > 0) {
+      dispatch(fetchEvents({ interests: selectedInterests }));
+    } else {
+      dispatch(fetchEvents());
+    }
+  }, [dispatch, selectedInterests]);
 
   const handleClickMap = (e: IMapClickEvent) => {
     const coords = e.get("coords");

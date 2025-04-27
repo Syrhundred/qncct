@@ -5,10 +5,12 @@ interface ButtonProps {
   state?: boolean;
   buttonText: string;
   onClick?: () => void;
+  className?: string;
 }
 
 const Button: React.FC<ButtonProps> = ({
   buttonType = "submit",
+  className,
   state = false,
   buttonText,
   onClick,
@@ -18,7 +20,7 @@ const Button: React.FC<ButtonProps> = ({
       type={buttonType}
       disabled={state}
       onClick={onClick}
-      className={`w-full bg-gradient rounded-lg text-white text-sm p-3 ${state ? "opacity-50 cursor-not-allowed" : ""}`}
+      className={`w-full bg-gradient rounded-xl text-white text-sm font-semibold p-3 ${className} ${state ? "opacity-50 cursor-not-allowed" : ""}`}
     >
       {buttonText}
     </button>

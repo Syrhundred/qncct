@@ -10,6 +10,8 @@ import { completeRegistration } from "@/store/authSlice";
 import Button from "@/modules/shared/ui/button/Button";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { components } from "react-select";
+import { setCookie } from "@/shared/lib/cookies";
 
 const interestsOptions = [
   { value: "technology", label: "Technology" },
@@ -22,7 +24,6 @@ const interestsOptions = [
 
 const usernameSchema = Yup.object().shape({
   username: Yup.string()
-    .matches(/^[a-zA-Z0-9_.]+$/, "Only letters, numbers, _ and . are allowed")
     .min(3, "Username must be at least 3 characters")
     .max(20, "Username must be at most 20 characters")
     .required("Username is required"),
@@ -114,6 +115,7 @@ export default function CompleteRegistration() {
                 );
 
                 if (completeRegistration.fulfilled.match(result)) {
+                  setCookie("is_active", "true", 60 * 60 * 24 * 7);
                   router.push("/");
                 }
 
@@ -126,6 +128,7 @@ export default function CompleteRegistration() {
                     <Select
                       options={interestsOptions}
                       isMulti
+                      isSearchable={false} // ← ключевая строка
                       name="interests"
                       value={values.interests}
                       onChange={(selected) =>
@@ -134,7 +137,13 @@ export default function CompleteRegistration() {
                           selected as { value: string; label: string }[],
                         )
                       }
+                      components={{
+                        Input: (props) => (
+                          <components.Input {...props} autoComplete="nope" /> // Chrome уважает random-value
+                        ),
+                      }}
                     />
+
                     <ErrorMessage
                       name="interests"
                       component="p"

@@ -3,6 +3,7 @@ import authReducer from "./authSlice";
 import userLocationReducer from "./userLocationSlice";
 import eventReducer from "./eventSlice";
 import categoryReducer from "./categorySlice";
+import userReducer from "@/store/userSlice";
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     userLocation: userLocationReducer,
     event: eventReducer,
     category: categoryReducer,
+    user: userReducer,
   },
 });
 

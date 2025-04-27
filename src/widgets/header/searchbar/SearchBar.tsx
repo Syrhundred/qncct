@@ -1,7 +1,12 @@
+"use client";
 import { Search, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
+import FilterBottomSheet from "@/widgets/header/FilterBottomSheet";
 
 export default function SearchBar() {
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
   return (
     <div className="relative flex items-center">
       <Link href={"/search"} className="w-full">
@@ -15,9 +20,17 @@ export default function SearchBar() {
       <div className="absolute left-3 flex items-center">
         <Search className="text-lightgray opacity-20" />
       </div>
-      <button className="absolute right-3 flex items-center">
+      <button
+        type="button"
+        onClick={() => setIsFilterOpen(true)}
+        className="absolute right-3 flex items-center"
+      >
         <SlidersHorizontal />
       </button>
+
+      {isFilterOpen && (
+        <FilterBottomSheet onClose={() => setIsFilterOpen(false)} />
+      )}
     </div>
   );
 }

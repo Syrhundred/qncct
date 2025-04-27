@@ -39,7 +39,7 @@ export default function VerifyPhone() {
       if (token) {
         try {
           const result = await dispatch(verifyToken(token)).unwrap();
-          if (!result?.access_token) {
+          if (!result?.token) {
             router.push("/register");
           }
         } catch (error) {
