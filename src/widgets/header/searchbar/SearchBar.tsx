@@ -1,11 +1,37 @@
 "use client";
+
 import { Search, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import FilterBottomSheet from "@/widgets/header/FilterBottomSheet";
 
 export default function SearchBar() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  // Define a unique ID for this filter instance
+  const filterId = "search-filter";
+
+  useEffect(() => {
+    // Set up event listener for the custom close event
+    const handleCloseEvent = (e: CustomEvent) => {
+      if (e.detail.id === filterId) {
+        setIsFilterOpen(false);
+      }
+    };
+
+    // Add event listener
+    document.addEventListener(
+      "closeBottomSheet",
+      handleCloseEvent as EventListener,
+    );
+
+    // Clean up event listener on component unmount
+    return () => {
+      document.removeEventListener(
+        "closeBottomSheet",
+        handleCloseEvent as EventListener,
+      );
+    };
+  }, [filterId]);
 
   return (
     <div className="relative flex items-center">
@@ -28,9 +54,7 @@ export default function SearchBar() {
         <SlidersHorizontal />
       </button>
 
-      {isFilterOpen && (
-        <FilterBottomSheet onClose={() => setIsFilterOpen(false)} />
-      )}
+      <FilterBottomSheet open={isFilterOpen} onCloseId={filterId} />
     </div>
   );
 }

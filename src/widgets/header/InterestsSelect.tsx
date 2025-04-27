@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
+import type { FC } from "react";
 
 const interestsList = [
   { icon: "🎤", title: "Music" },
@@ -10,20 +11,19 @@ const interestsList = [
   { icon: "🎮", title: "Gaming" },
 ];
 
-export default function InterestsSelect({
-  selected,
-  setSelected,
-}: {
-  selected: string[];
-  setSelected: (value: string[]) => void;
-}) {
+interface InterestsSelectProps {
+  value: string[];
+  onChange: (value: string[]) => void;
+}
+
+const InterestsSelect: FC<InterestsSelectProps> = ({ value, onChange }) => {
   const [open, setOpen] = useState(false);
 
   const toggleSelect = (interest: string) => {
-    if (selected.includes(interest)) {
-      setSelected(selected.filter((i) => i !== interest));
+    if (value.includes(interest)) {
+      onChange(value.filter((i) => i !== interest));
     } else {
-      setSelected([...selected, interest]);
+      onChange([...value, interest]);
     }
   };
 
@@ -49,7 +49,7 @@ export default function InterestsSelect({
             >
               <input
                 type="checkbox"
-                checked={selected.includes(interest.title)}
+                checked={value.includes(interest.title)}
                 onChange={() => toggleSelect(interest.title)}
                 className="form-checkbox h-5 w-5 text-[#6A0DAD] rounded-md border-gray-300 focus:ring-0"
               />
@@ -63,4 +63,6 @@ export default function InterestsSelect({
       )}
     </div>
   );
-}
+};
+
+export default InterestsSelect;

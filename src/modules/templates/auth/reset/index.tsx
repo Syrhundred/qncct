@@ -182,7 +182,10 @@ export default function ResetPassword() {
                   .min(6, "Password must be at least 6 characters")
                   .required("Required"),
                 confirmPassword: Yup.string()
-                  .oneOf([Yup.ref("password"), null], "Passwords must match")
+                  .oneOf(
+                    [Yup.ref("password"), undefined],
+                    "Passwords must match",
+                  )
                   .required("Required"),
               })}
               onSubmit={async (values, { setSubmitting }) => {

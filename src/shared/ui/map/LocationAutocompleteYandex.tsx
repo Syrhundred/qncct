@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FC } from "react";
 
 interface YandexPlace {
   name: string;
@@ -25,11 +25,11 @@ type YandexGeoResponseItem = {
   };
 };
 
-export default function LocationAutocompleteYandex({
+const LocationAutocompleteYandex: FC<LocationAutocompleteProps> = ({
   onSelect,
   placeholder = "Search for a location",
   defaultValue = "",
-}: LocationAutocompleteProps) {
+}) => {
   const [input, setInput] = useState(defaultValue);
   const [suggestions, setSuggestions] = useState<YandexPlace[]>([]);
   const [isFocused, setIsFocused] = useState(false);
@@ -115,4 +115,6 @@ export default function LocationAutocompleteYandex({
       )}
     </div>
   );
-}
+};
+
+export default LocationAutocompleteYandex;

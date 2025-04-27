@@ -1,6 +1,7 @@
 "use client";
+
 import { Plus } from "lucide-react";
-import React from "react";
+import React, { type FC } from "react";
 
 type UploadedImage = {
   file: File;
@@ -13,12 +14,12 @@ type PhotoUploadProps = {
   onImagesChange: (imgs: UploadedImage[]) => void;
 };
 
-export default function PhotoUpload({
+const PhotoUpload: FC<PhotoUploadProps> = ({
   cover,
   images,
   onCoverChange,
   onImagesChange,
-}: PhotoUploadProps) {
+}) => {
   const handleFileChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     type: "cover" | "extra",
@@ -63,6 +64,7 @@ export default function PhotoUpload({
         </div>
       </label>
 
+      {/* Additional photos */}
       <div className="grid grid-cols-3 gap-4">
         {[...images, null, null, null].slice(0, 3).map((img, index) => (
           <label
@@ -91,4 +93,6 @@ export default function PhotoUpload({
       </div>
     </div>
   );
-}
+};
+
+export default PhotoUpload;

@@ -14,10 +14,13 @@ const initialState: ExtendedUserState = {
   phone_number: "",
   role: "",
   is_active: false,
+  followers_count: 0, // Added this missing property
+  following_count: 0, // Added this missing property
   profile: {
     username: "",
     interests: [],
     avatar_url: "",
+    about_me: "", // Added this missing property
   },
   loading: false,
   error: null,
