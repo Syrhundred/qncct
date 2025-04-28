@@ -53,7 +53,7 @@ export default function GeocodeMap({
   // Центрируем карту, когда userCoords загрузились
   useEffect(() => {
     if (mapRef.current && userCoords) {
-      mapRef.current.setCenter(userCoords, ZOOM);
+      mapRef.current?.setCenter(userCoords, ZOOM);
     }
   }, [userCoords]);
 

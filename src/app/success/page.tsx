@@ -9,6 +9,8 @@ export default function SuccessPage() {
   const router = useRouter();
 
   useEffect(() => {
+    if (typeof window === "undefined") return; // проверка для серверной среды
+
     const accessToken = searchParams.get("access_token");
     const refreshToken = searchParams.get("refresh_token");
     const isActiveParam = searchParams.get("is_active");
@@ -29,7 +31,7 @@ export default function SuccessPage() {
     // 2. Cookies
     setCookie("access_token", accessToken, accessMaxAge);
     setCookie("refresh_token", refreshToken, accessMaxAge);
-    setCookie("is_active", String(isActive), 60 * 60 * 24 * 7); // просто неделя отдельно
+    setCookie("is_active", String(isActive), 60 * 60 * 24 * 7); // неделя
 
     // 3. Чистим URL
     window.history.replaceState({}, document.title, "/success");

@@ -37,7 +37,14 @@ export default function Login() {
   const router = useRouter();
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [errorFromBack, setErrorFromBack] = useState("");
-  const isActive = localStorage.getItem("is_active");
+  const [isActive, setIsActive] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const activeStatus = localStorage.getItem("is_active");
+      setIsActive(activeStatus);
+    }
+  }, []);
 
   useEffect(() => {
     console.log(isAuth, user);

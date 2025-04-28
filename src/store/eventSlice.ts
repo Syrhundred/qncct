@@ -57,10 +57,16 @@ export const createEvent = createAsyncThunk<IEvent, CreateEventPayload>(
       formData.append("date", payload.date);
       formData.append("description", payload.description);
 
+      let accessToken = "";
+
+      if (typeof window !== "undefined") {
+        accessToken = localStorage.getItem("access_token") || "";
+      }
+
       const res = await fetch(`${baseUrl}/api/v1/events/`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: formData,
       });

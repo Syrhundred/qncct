@@ -13,6 +13,11 @@ const initialState: AuthState = {
   isAuth: false,
 };
 
+// Utility function for error handling
+const handleError = (error: unknown) => {
+  return error instanceof Error ? error.message : "Unknown error";
+};
+
 export const verifyToken = createAsyncThunk(
   "auth/verifyToken",
   async (token: string, { rejectWithValue }) => {
@@ -33,37 +38,50 @@ export const verifyToken = createAsyncThunk(
 
       return { token: data.access_token, user: data.user };
     } catch (error) {
-      return rejectWithValue(
-        error instanceof Error ? error.message : "Unknown error",
-      );
+      return rejectWithValue(handleError(error));
     }
   },
 );
+
+// Generic function for verification
+const verifyRequest = async (
+  url: string,
+  body: object,
+  tokenRequired = false,
+) => {
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+
+  if (tokenRequired) {
+    headers["Authorization"] = `Bearer ${localStorage.getItem("access_token")}`;
+  }
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+
+  return data;
+};
 
 export const verifyPhone = createAsyncThunk(
   "auth/verifyPhone",
   async (phone_number: string, { rejectWithValue }) => {
     try {
-      const res = await fetch(
+      await verifyRequest(
         `${baseUrl}/api/v1/auth/request-number-verification`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-          },
-          body: JSON.stringify({ phone_number }),
-        },
+        { phone_number },
+        true,
       );
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
 
       return { phone_number };
     } catch (error) {
-      return rejectWithValue(
-        error instanceof Error ? error.message : "Unknown error",
-      );
+      return rejectWithValue(handleError(error));
     }
   },
 );
@@ -78,26 +96,18 @@ export const verifyCode = createAsyncThunk(
     { rejectWithValue },
   ) => {
     try {
-      const res = await fetch(`${baseUrl}/api/v1/auth/verify-phone`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        },
-        body: JSON.stringify({ phone_number, verification_code }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+      const data = await verifyRequest(
+        `${baseUrl}/api/v1/auth/verify-phone`,
+        { phone_number, verification_code },
+        true,
+      );
 
       localStorage.setItem("access_token", data.access_token);
       localStorage.setItem("refresh_token", data.refresh_token);
 
       return { token: data.access_token, user: data.user as UserState };
     } catch (error) {
-      return rejectWithValue(
-        error instanceof Error ? error.message : "Unknown error",
-      );
+      return rejectWithValue(handleError(error));
     }
   },
 );
@@ -132,9 +142,7 @@ export const loginUser = createAsyncThunk(
 
       return { token: data.access_token, user: data.user as UserState };
     } catch (error) {
-      return rejectWithValue(
-        error instanceof Error ? error.message : "Unknown error",
-      );
+      return rejectWithValue(handleError(error));
     }
   },
 );
@@ -157,9 +165,7 @@ export const registerUser = createAsyncThunk(
 
       return data;
     } catch (error) {
-      return rejectWithValue(
-        error instanceof Error ? error.message : "Unknown error",
-      );
+      return rejectWithValue(handleError(error));
     }
   },
 );
@@ -171,23 +177,15 @@ export const completeRegistration = createAsyncThunk(
     { rejectWithValue },
   ) => {
     try {
-      const res = await fetch(`${baseUrl}/api/v1/auth/complete-registration`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        },
-        body: JSON.stringify({ username, interests }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+      await verifyRequest(
+        `${baseUrl}/api/v1/auth/complete-registration`,
+        { username, interests },
+        true,
+      );
 
       return { username, interests };
     } catch (error) {
-      return rejectWithValue(
-        error instanceof Error ? error.message : "Unknown error",
-      );
+      return rejectWithValue(handleError(error));
     }
   },
 );
@@ -196,19 +194,12 @@ export const forgotPassword = createAsyncThunk(
   "auth/forgotPassword",
   async (email: { email: string }, { rejectWithValue }) => {
     try {
-      const res = await fetch(`${baseUrl}/api/v1/auth/forgot-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(email),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
-
-      return data;
-    } catch (error) {
-      return rejectWithValue(
-        error instanceof Error ? error.message : "Unknown error",
+      return await verifyRequest(
+        `${baseUrl}/api/v1/auth/forgot-password`,
+        email,
       );
+    } catch (error) {
+      return rejectWithValue(handleError(error));
     }
   },
 );
@@ -224,19 +215,13 @@ export const verifyCodeResetPassword = createAsyncThunk(
     { rejectWithValue },
   ) => {
     try {
-      const res = await fetch(`${baseUrl}/api/v1/auth/reset-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, verification_code, new_password }),
+      return await verifyRequest(`${baseUrl}/api/v1/auth/reset-password`, {
+        email,
+        verification_code,
+        new_password,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
-
-      return data;
     } catch (error) {
-      return rejectWithValue(
-        error instanceof Error ? error.message : "Unknown error",
-      );
+      return rejectWithValue(handleError(error));
     }
   },
 );
