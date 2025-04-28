@@ -36,17 +36,21 @@ export default function Login() {
   const router = useRouter();
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [errorFromBack, setErrorFromBack] = useState("");
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Ensure localStorage is accessed only on the client side
   const [isActive, setIsActive] = useState<string | null>(null);
 
   useEffect(() => {
     // Check for window object to make sure it's running in the browser
-    if (typeof window !== "undefined") {
+    if (isClient) {
       const activeStatus = localStorage.getItem("is_active");
       setIsActive(activeStatus);
     }
-  }, []);
+  }, [isClient]);
 
   useEffect(() => {
     if (isAuth) {
