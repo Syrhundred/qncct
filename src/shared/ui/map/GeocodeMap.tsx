@@ -1,6 +1,8 @@
 "use client";
 
-import { Map, Placemark, useYMaps } from "@pbe/react-yandex-maps";
+import { Map as YandexMap, Placemark, useYMaps } from "@pbe/react-yandex-maps";
+import type { Map as YMapType } from "yandex-maps";
+import type { MapEvent, IEvent } from "yandex-maps";
 import { useAppSelector } from "@/shared/hooks/useAppSelector";
 import { useEffect, useRef, useState } from "react";
 import { IGeocodeResult } from "yandex-maps";
@@ -15,10 +17,6 @@ interface IAddress {
   route: string;
 }
 
-interface IMapClickEvent {
-  get: (key: string) => [number, number];
-}
-
 export default function GeocodeMap({
   containerSize,
   currentEvent,
@@ -29,7 +27,7 @@ export default function GeocodeMap({
   selectedInterests?: string[];
 }) {
   const ymaps = useYMaps(["geocode"]);
-  const mapRef = useRef<Map | undefined>(undefined);
+  const mapRef = useRef<YMapType | undefined>(undefined);
   const dispatch = useDispatch<AppDispatch>();
 
   const [coordinates, setCoordinates] = useState<[number, number] | null>(null);
@@ -54,8 +52,8 @@ export default function GeocodeMap({
 
   // Центрируем карту, когда userCoords загрузились
   useEffect(() => {
-    if (mapRef.current?.controller && userCoords) {
-      mapRef.current.controller.setCenter(userCoords, ZOOM);
+    if (mapRef.current && userCoords) {
+      mapRef.current.setCenter(userCoords, ZOOM);
     }
   }, [userCoords]);
 
@@ -67,8 +65,8 @@ export default function GeocodeMap({
     }
   }, [dispatch, selectedInterests]);
 
-  const handleClickMap = (e: IMapClickEvent) => {
-    const coords = e.get("coords");
+  const handleClickMap = (e: MapEvent<IEvent>) => {
+    const coords = e.get("coords") as [number, number];
     if (coords) {
       setCoordinates(coords);
     }
@@ -99,7 +97,7 @@ export default function GeocodeMap({
 
   return (
     <MapContainer size={containerSize}>
-      <Map
+      <YandexMap
         instanceRef={mapRef}
         defaultState={{
           center: currentEvent ?? FALLBACK_CENTER,
@@ -156,7 +154,7 @@ export default function GeocodeMap({
             />
           );
         })}
-      </Map>
+      </YandexMap>
     </MapContainer>
   );
 }
