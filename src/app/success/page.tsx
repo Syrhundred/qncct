@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, Suspense } from "react";
+import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { setCookie } from "@/shared/lib/cookies";
 
@@ -19,17 +19,19 @@ export default function SuccessPage() {
     if (!accessToken || !refreshToken || isActiveParam === null) return;
 
     // Decode JWT and calculate token expiry
-    const jwt = JSON.parse(atob(accessToken.split(".")[1]));
+    let jwt;
+    try {
+      jwt = JSON.parse(atob(accessToken.split(".")[1]));
+    } catch (e) {
+      console.error("Invalid JWT:", e);
+      return;
+    }
+
     const accessMaxAge =
       Math.max(jwt.exp * 1000 - Date.now(), 0) / 1000 || 60 * 60 * 24 * 7;
 
     // 1. LocalStorage
-    if (
-      accessToken &&
-      refreshToken &&
-      accessToken.length > 0 &&
-      refreshToken.length > 0
-    ) {
+    if (accessToken && refreshToken) {
       localStorage.setItem("access_token", accessToken);
       localStorage.setItem("refresh_token", refreshToken);
       localStorage.setItem("is_active", JSON.stringify(isActive));
@@ -51,9 +53,5 @@ export default function SuccessPage() {
     }
   }, [searchParams, router]);
 
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <div>Authorising…</div>
-    </Suspense>
-  );
+  return <div>Authorising…</div>;
 }

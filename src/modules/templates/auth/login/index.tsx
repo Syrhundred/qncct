@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
@@ -42,6 +40,7 @@ export default function Login() {
   const [isActive, setIsActive] = useState<string | null>(null);
 
   useEffect(() => {
+    // Check for window object to make sure it's running in the browser
     if (typeof window !== "undefined") {
       const activeStatus = localStorage.getItem("is_active");
       setIsActive(activeStatus);
