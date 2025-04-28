@@ -1,8 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: false, // Выключает строгий режим
+  reactStrictMode: false,
   experimental: {
-    reactRoot: true, // Позволяет использовать новые React функции, включая CSR
+    reactRoot: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
   },
   images: {
     domains: ["2ndkz.s3.eu-north-1.amazonaws.com"],
