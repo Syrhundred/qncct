@@ -29,15 +29,17 @@ export default function GeocodeMap({
   selectedInterests?: string[];
 }) {
   const ymaps = useYMaps(["geocode"]);
-  const mapRef = useRef<any>(null);
+  const mapRef = useRef<Map | undefined>(undefined);
   const dispatch = useDispatch<AppDispatch>();
 
   const [coordinates, setCoordinates] = useState<[number, number] | null>(null);
   const [address, setAddress] = useState<IAddress | null>(null);
+  console.log(coordinates, address); // TODO: USE them
 
   const events = useAppSelector((state) => state.event.events);
   const { coords: userCoords, isLoading: isUserLocationLoading } =
     useUserCoordinates();
+  console.log(isUserLocationLoading); // TODO: USE IT
 
   const FALLBACK_CENTER: [number, number] = [43.238, 76.886]; // Алматы
   const ZOOM = 12;
@@ -52,8 +54,8 @@ export default function GeocodeMap({
 
   // Центрируем карту, когда userCoords загрузились
   useEffect(() => {
-    if (mapRef.current && userCoords) {
-      mapRef.current.setCenter(userCoords, ZOOM, { duration: 500 });
+    if (mapRef.current?.controller && userCoords) {
+      mapRef.current.controller.setCenter(userCoords, ZOOM);
     }
   }, [userCoords]);
 
@@ -139,7 +141,7 @@ export default function GeocodeMap({
                 style={{animationName: 'bounceIn'}}>${event.name}</div>`,
                 hintContent: event.name,
                 balloonContentHeader: `<b>${event.name}</b>`,
-                balloonContentBody: `<div><img src="${event.images[0]?.url}" width="100%" /><p>${event.date}</p></div>`,
+                balloonContentBody: `<div><img alt="balloon" src="${event.images[0]?.url}" width="100%" /><p>${event.date}</p></div>`,
                 balloonContentFooter: `<small>${event.date}</small>`,
               }}
               options={{

@@ -5,7 +5,6 @@ import { Provider } from "react-redux";
 import { store } from "@/store";
 import Script from "next/script";
 import { Poppins } from "next/font/google";
-import PageTransition from "@/shared/ui/page-transition/PageTransition";
 
 const poppins = Poppins({
   subsets: ["latin"],

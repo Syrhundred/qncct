@@ -2,6 +2,7 @@
 
 import { Plus } from "lucide-react";
 import React, { type FC } from "react";
+import Image from "next/image";
 
 type UploadedImage = {
   file: File;
@@ -42,8 +43,10 @@ const PhotoUpload: FC<PhotoUploadProps> = ({
       <label className="w-full h-40 border-2 bg-gradient border-dashed rounded-lg flex items-center justify-center cursor-pointer">
         <div className="bg-white w-full h-full rounded-lg flex items-center justify-center">
           {cover?.file ? (
-            <img
+            <Image
               src={URL.createObjectURL(cover.file)}
+              height={1000}
+              width={1000}
               alt="Cover"
               className="w-full h-full object-cover rounded-xl"
             />
@@ -73,7 +76,9 @@ const PhotoUpload: FC<PhotoUploadProps> = ({
           >
             <div className="bg-white w-full h-full rounded-lg flex items-center justify-center">
               {img ? (
-                <img
+                <Image
+                  width={1000}
+                  height={1000}
                   src={URL.createObjectURL(img.file)}
                   alt={`Preview ${index}`}
                   className="w-full h-full object-cover rounded-xl"

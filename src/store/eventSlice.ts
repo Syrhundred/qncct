@@ -32,6 +32,9 @@ interface FetchEventsParams {
   search?: string;
 }
 
+// Fix: Use Record<string, string> to satisfy URLSearchParams requirements
+type SearchParamsObject = Record<string, string>;
+
 const initialState: EventState = {
   events: [],
   selectedEvent: null,
@@ -44,8 +47,8 @@ export const createEvent = createAsyncThunk<IEvent, CreateEventPayload>(
   async (payload, { rejectWithValue }) => {
     try {
       const formData = new FormData();
-      formData.append("banner", payload.banner); // это File
-      payload.images.forEach((file) => formData.append("images", file)); // это File[]
+      formData.append("banner", payload.banner);
+      payload.images.forEach((file) => formData.append("images", file));
       formData.append("name", payload.name);
       formData.append("category_id", payload.category_id);
       formData.append("address", payload.address);
@@ -59,7 +62,6 @@ export const createEvent = createAsyncThunk<IEvent, CreateEventPayload>(
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },
-
         body: formData,
       });
 
@@ -81,13 +83,28 @@ export const fetchEvents = createAsyncThunk<IEvent[], FetchEventsParams | void>(
   "event/fetchEvents",
   async (params) => {
     try {
-      const queryString = params
-        ? "?" +
-          new URLSearchParams({
-            ...params,
-            interests: params.interests?.join(",") || "", // массив -> строка
-          } as any).toString()
-        : "";
+      let queryString = "";
+
+      if (params) {
+        // Create a properly typed params object for URLSearchParams
+        const searchParams: SearchParamsObject = {};
+
+        // Add only defined params with proper string conversion
+        if (params.date_filter) searchParams.date_filter = params.date_filter;
+        if (params.custom_date) searchParams.custom_date = params.custom_date;
+        if (params.lat !== undefined) searchParams.lat = params.lat.toString();
+        if (params.lon !== undefined) searchParams.lon = params.lon.toString();
+        if (params.radius_km !== undefined)
+          searchParams.radius_km = params.radius_km.toString();
+        if (params.search) searchParams.search = params.search;
+
+        // Handle interests array
+        if (params.interests && params.interests.length > 0) {
+          searchParams.interests = params.interests.join(",");
+        }
+
+        queryString = "?" + new URLSearchParams(searchParams).toString();
+      }
 
       const res = await fetch(`${baseUrl}/api/v1/events/filter${queryString}`);
       const data = await res.json();
@@ -131,29 +148,8 @@ const eventSlice = createSlice({
   name: "event",
   initialState,
   reducers: {
-    setEvents(state, action: PayloadAction<IEvent[]>) {
-      state.events = action.payload;
-    },
-    addEvent(state, action: PayloadAction<IEvent>) {
-      state.events.push(action.payload);
-    },
-    updateEvent(state, action: PayloadAction<IEvent>) {
-      const index = state.events.findIndex((e) => e.id === action.payload.id);
-      if (index !== -1) state.events[index] = action.payload;
-    },
-    deleteEvent(state, action: PayloadAction<string>) {
-      state.events = state.events.filter((e) => e.id !== action.payload);
-    },
     setSelectedEvent(state, action: PayloadAction<IEvent | null>) {
       state.selectedEvent = action.payload;
-    },
-
-    // LOADING / ERROR (опционально)
-    setLoading(state, action: PayloadAction<boolean>) {
-      state.isLoading = action.payload;
-    },
-    setError(state, action: PayloadAction<string | null>) {
-      state.error = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -167,7 +163,7 @@ const eventSlice = createSlice({
         (state, action: PayloadAction<IEvent>) => {
           state.isLoading = false;
           state.error = null;
-          state.events.push(action.payload); // или addEvent(state, action), если хочешь переиспользовать
+          state.events.push(action.payload);
         },
       )
       .addCase(createEvent.rejected, (state, action) => {
@@ -219,19 +215,11 @@ const eventSlice = createSlice({
       })
       .addCase(joinEvent.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || "Failed to join event";
+        state.error = action.error.message || "Failed to fetch event";
       });
   },
 });
 
-export const {
-  setEvents,
-  addEvent,
-  updateEvent,
-  deleteEvent,
-  setSelectedEvent,
-  setLoading,
-  setError,
-} = eventSlice.actions;
+export const { setSelectedEvent } = eventSlice.actions;
 
 export default eventSlice.reducer;

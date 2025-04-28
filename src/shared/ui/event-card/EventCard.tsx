@@ -6,6 +6,7 @@ import Link from "next/link";
 import { getDistanceInKm } from "@/shared/utils/getDistanceInKm";
 import { useAppSelector } from "@/shared/hooks/useAppSelector";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 export default function EventCard({ event }: { event: IEvent }) {
   const formattedDate = dayjs(event.date).format("D MMMM YYYY");
@@ -41,13 +42,17 @@ export default function EventCard({ event }: { event: IEvent }) {
     >
       <div className="w-full h-44 bg-gray-50 rounded-t-[10px] flex justify-center">
         {event.images[0]?.url ? (
-          <img
+          <Image
+            height={1000}
+            width={1000}
             src={event.images[0]?.url}
             className="w-full h-full object-cover rounded-t-[10px]"
             alt="banner"
           />
         ) : (
-          <img
+          <Image
+            height={1000}
+            width={1000}
             src="/assets/img/event-card/img.png"
             className="w-1/2 h-full object-cover rounded-t-[10px]"
             alt="default"
@@ -76,7 +81,9 @@ export default function EventCard({ event }: { event: IEvent }) {
         </div>
         <div className="w-full flex justify-between items-center">
           <span className="text-sm flex gap-2">
-            <img
+            <Image
+              width={1000}
+              height={1000}
               src={
                 event.created_by?.profile?.avatar_url
                   ? event.created_by?.profile?.avatar_url
