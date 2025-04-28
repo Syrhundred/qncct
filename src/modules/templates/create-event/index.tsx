@@ -22,6 +22,7 @@ import { createEvent } from "@/store/eventSlice";
 import { FormikTimePicker } from "@/widgets/create-event/FormikTimePicker";
 import "dayjs/plugin/utc";
 import { useRouter } from "next/navigation";
+import CreateEventSkeleton from "@/shared/ui/skeletons/CreateEventSkeleton";
 
 dayjs.extend(utc);
 dayjs.locale("ru");
@@ -32,14 +33,19 @@ export type UploadedImage = {
 
 export default function CreateEvent() {
   const dispatch = useDispatch<AppDispatch>();
-  const categories = useSelector(
-    (state: RootState) => state.category.categories,
+  const { categories, isLoading } = useSelector(
+    (state: RootState) => state.category,
   );
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   useEffect(() => {
     dispatch(fetchCategories());
   }, [dispatch]);
+
+  if (isLoading) {
+    return <CreateEventSkeleton />;
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -137,21 +143,28 @@ export default function CreateEvent() {
               {/* Category */}
               <div className="flex flex-col gap-1">
                 <label className="text-sm font-bold">Event category</label>
-                <select
-                  name="category"
-                  value={values.category_id}
-                  onChange={(e) => setFieldValue("category_id", e.target.value)}
-                  className="border p-3 rounded-lg text-sm w-full bg-white"
-                >
-                  <option value="" disabled>
-                    Select category
-                  </option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
+                {isLoading ? (
+                  <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+                ) : (
+                  <select
+                    name="category"
+                    value={values.category_id}
+                    onChange={(e) =>
+                      setFieldValue("category_id", e.target.value)
+                    }
+                    className="border p-3 rounded-lg text-sm w-full bg-white"
+                  >
+                    <option value="" disabled>
+                      Select category
                     </option>
-                  ))}
-                </select>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+
                 {touched.category_id && errors.category_id && (
                   <span className="text-red-500 text-xs">
                     {errors.category_id}

@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { UserState } from "@/shared/types/types";
+import { fetchWithAuth } from "@/shared/lib/fetchWithAuth";
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -32,7 +33,7 @@ export const fetchCurrentUser = createAsyncThunk<
   { rejectValue: string }
 >("user/fetchCurrentUser", async (_, { rejectWithValue }) => {
   try {
-    const res = await fetch(`${baseUrl}/api/v1/users/me`, {
+    const res = await fetchWithAuth(`${baseUrl}/api/v1/users/me`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -41,6 +42,7 @@ export const fetchCurrentUser = createAsyncThunk<
     });
 
     const data = await res.json();
+    console.log(data);
     if (!res.ok) throw new Error(data.message || "Failed to fetch user");
 
     // Ensure the response conforms to the UserState type
@@ -83,10 +85,10 @@ const userSlice = createSlice({
         (state, action: PayloadAction<UserState>) => {
           state.loading = false;
           state.error = null;
-          // Use spread operator for better clarity
-          state = { ...state, ...action.payload };
+          Object.assign(state, action.payload);
         },
       )
+
       .addCase(fetchCurrentUser.rejected, (state, action) => {
         state.loading = false;
         state.error =

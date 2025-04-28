@@ -9,6 +9,7 @@ import { useAppDispatch } from "@/shared/lib/storeHooks";
 import { fetchCurrentUser } from "@/store/userSlice";
 import { useAppSelector } from "@/shared/hooks/useAppSelector";
 import Interest from "@/shared/ui/interest/Interest";
+import { Skeleton } from "@mui/material";
 
 export default function Profile() {
   const dispatch = useAppDispatch();
@@ -18,6 +19,23 @@ export default function Profile() {
       dispatch(fetchCurrentUser());
     }
   }, [user.id, dispatch]);
+
+  if (user.loading) {
+    return (
+      <div className="h-screen bg-white">
+        <LayoutWithNavigation>
+          <Container>
+            <div className="flex flex-col gap-6 items-center mb-20">
+              <Skeleton variant="circular" width={96} height={96} />
+              <Skeleton variant="text" width={120} height={32} />
+              <Skeleton variant="rectangular" width="80%" height={20} />
+              <Skeleton variant="rectangular" width="80%" height={100} />
+            </div>
+          </Container>
+        </LayoutWithNavigation>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen bg-white">

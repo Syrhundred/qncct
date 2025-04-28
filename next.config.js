@@ -4,9 +4,9 @@ const nextConfig = {
   experimental: {
     reactRoot: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // eslint: {
+  //   ignoreDuringBuilds: true,
+  // },
   images: {
     domains: ["2ndkz.s3.eu-north-1.amazonaws.com"],
   },

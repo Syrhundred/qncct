@@ -112,9 +112,16 @@ export const fetchEvents = createAsyncThunk<IEvent[], FetchEventsParams | void>(
         queryString = "?" + new URLSearchParams(searchParams).toString();
       }
 
-      const res = await fetch(`${baseUrl}/api/v1/events/filter${queryString}`);
-      const data = await res.json();
+      if (queryString) {
+        const res = await fetch(
+          `${baseUrl}/api/v1/events/filter${queryString}`,
+        );
+        const data = await res.json();
+        return data as IEvent[];
+      }
 
+      const res = await fetch(`${baseUrl}/api/v1/events/`);
+      const data = await res.json();
       return data as IEvent[];
     } catch (error) {
       console.error("Fetch events error:", error);
