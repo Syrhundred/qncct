@@ -37,6 +37,8 @@ export default function Login() {
   const router = useRouter();
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [errorFromBack, setErrorFromBack] = useState("");
+
+  // Ensure localStorage is accessed only on the client side
   const [isActive, setIsActive] = useState<string | null>(null);
 
   useEffect(() => {
@@ -47,7 +49,6 @@ export default function Login() {
   }, []);
 
   useEffect(() => {
-    console.log(isAuth, user);
     if (isAuth) {
       if (isActive === "true") {
         router.replace("/");
@@ -55,7 +56,7 @@ export default function Login() {
         router.push("/complete-registration");
       }
     }
-  }, [isAuth, user, router]);
+  }, [isAuth, user, router, isActive]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-white">
@@ -82,7 +83,7 @@ export default function Login() {
               <Form className="flex flex-col space-y-4">
                 <div>
                   <Field
-                    type="text" // ✅ Меняем на text, чтобы поддерживать email и телефон
+                    type="text" // ✅ Changed to text to support email and phone
                     name="identifier"
                     placeholder="Email or Phone Number"
                     className="border p-3 rounded-lg text-sm w-full"
