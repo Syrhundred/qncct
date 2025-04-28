@@ -1,15 +1,18 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import React, { Suspense } from "react";
+import { useRouter } from "next/navigation";
 import { setCookie } from "@/shared/lib/cookies";
+import { useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 
-export default function SuccessPage() {
+// Create a separate component that uses useSearchParams
+function AuthHandler() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
   useEffect(() => {
-    if (typeof window === "undefined") return; // Check for server-side
+    if (typeof window === "undefined") return;
 
     const accessToken = searchParams.get("access_token");
     const refreshToken = searchParams.get("refresh_token");
@@ -53,5 +56,14 @@ export default function SuccessPage() {
     }
   }, [searchParams, router]);
 
-  return <div>Authorising…</div>;
+  return <div>Processing authentication...</div>;
+}
+
+// Main component that wraps the search params component with Suspense
+export default function SuccessPage() {
+  return (
+    <Suspense fallback={<div>Authorising...</div>}>
+      <AuthHandler />
+    </Suspense>
+  );
 }

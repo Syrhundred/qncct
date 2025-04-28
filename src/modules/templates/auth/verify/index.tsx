@@ -8,7 +8,7 @@ import { verifyCode, verifyPhone, verifyToken } from "@/store/authSlice";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Container } from "@/modules/shared/ui/core/Container";
 import Button from "@/modules/shared/ui/button/Button";
-import React, { Suspense, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 // Валидация
 const phoneSchema = Yup.object().shape({
