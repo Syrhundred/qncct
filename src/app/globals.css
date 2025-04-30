@@ -2,11 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+    touch-action: manipulation;
+}
+
 
 body {
     font-family: 'Poppins', sans-serif;
     color: #25131A;
 }
+
+input, select, textarea {
+    font-size: 16px;
+}
+
 
 h1 {
     font-size: 24px;
