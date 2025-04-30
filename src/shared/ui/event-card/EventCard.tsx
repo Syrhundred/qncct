@@ -10,6 +10,7 @@ import Image from "next/image";
 
 export default function EventCard({ event }: { event: IEvent }) {
   const formattedDate = dayjs(event.date).format("D MMMM YYYY");
+  const user = useAppSelector((state) => state.user);
   const formattedAddress = event.address.substring(
     0,
     event.address.indexOf(", К"),
@@ -94,12 +95,14 @@ export default function EventCard({ event }: { event: IEvent }) {
             />
             {event.created_by?.profile?.username}
           </span>
-          <SmallButton
-            buttonText={"Join"}
-            state={false}
-            buttonType="button"
-            size="px-11 py-2"
-          />
+          {event.created_by?.profile?.username !== user.profile?.username && (
+            <SmallButton
+              buttonText={"Join"}
+              state={false}
+              buttonType="button"
+              size="px-11 py-2"
+            />
+          )}
         </div>
       </div>
     </Link>

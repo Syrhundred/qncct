@@ -38,6 +38,8 @@ export default function Event() {
   const [distance, setDistance] = useState<string>("");
   const userCoords = useAppSelector((state) => state.userLocation.coords);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const user = useAppSelector((state) => state.user);
+
   const normalizeCoordinates = (
     lng: number | string,
     lat: number | string,
@@ -162,12 +164,17 @@ export default function Event() {
             )}
           </div>
 
-          <Button
-            onClick={handleJoinButton}
-            buttonText="Join"
-            buttonType="button"
-            state={false}
-          />
+          {event.created_by?.profile?.username === user?.profile?.username ? (
+            <p>You have created this event!</p>
+          ) : (
+            <Button
+              onClick={handleJoinButton}
+              buttonText="Join"
+              buttonType="button"
+              state={false}
+            />
+          )}
+
           {isModalOpen && (
             <Modal
               onConfirm={onConfirm}

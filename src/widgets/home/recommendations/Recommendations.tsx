@@ -6,6 +6,7 @@ import { fetchEvents } from "@/store/eventSlice";
 import { useDispatch, useSelector } from "react-redux";
 import EventCard from "@/shared/ui/event-card/EventCard";
 import EventCardSkeleton from "@/shared/ui/skeletons/EventCardSkeleton";
+import { fetchCurrentUser } from "@/store/userSlice";
 
 export default function Recommendations() {
   const events = useAppSelector((state) => state.event.events);
@@ -14,6 +15,7 @@ export default function Recommendations() {
 
   useEffect(() => {
     dispatch(fetchEvents());
+    dispatch(fetchCurrentUser());
   }, [dispatch]);
 
   return (

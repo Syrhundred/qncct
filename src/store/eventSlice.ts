@@ -154,8 +154,17 @@ export const fetchEventById = createAsyncThunk<IEvent, string>(
 export const joinEvent = createAsyncThunk(
   "event/joinEvent",
   async (id: string | undefined) => {
+    let accessToken;
+    if (typeof window !== "undefined") {
+      accessToken = localStorage.getItem("access_token") || "";
+    }
     try {
-      await fetch(`${baseUrl}/api/v1/events/${id}/join`);
+      await fetch(`${baseUrl}/api/v1/events/${id}/join`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
     } catch (error) {
       console.error("Fetch event by id error:", error);
       throw new Error("Failed to fetch event by id");

@@ -42,7 +42,6 @@ export const fetchCurrentUser = createAsyncThunk<
     });
 
     const data = await res.json();
-    console.log(data);
     if (!res.ok) throw new Error(data.message || "Failed to fetch user");
 
     // Ensure the response conforms to the UserState type
