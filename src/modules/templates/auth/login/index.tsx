@@ -10,6 +10,7 @@ import { Container } from "@/modules/shared/ui/core/Container";
 import Link from "next/link";
 import Image from "next/image";
 import Button from "@/modules/shared/ui/button/Button";
+import { useAppSelector } from "@/shared/hooks/useAppSelector";
 
 const validationSchema = Yup.object({
   identifier: Yup.string()
@@ -31,12 +32,13 @@ const validationSchema = Yup.object({
 
 export default function Login() {
   const dispatch = useDispatch<AppDispatch>();
-  const { loading } = useSelector((state: RootState) => state.auth);
-  const { error, isAuth, user } = useSelector((state: RootState) => state.auth);
+  const { loading } = useAppSelector((state) => state.auth);
+  const { error, isAuth, user } = useAppSelector((state) => state.auth);
   const router = useRouter();
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [errorFromBack, setErrorFromBack] = useState("");
   const [isClient, setIsClient] = useState(false);
+
   useEffect(() => {
     setIsClient(true);
   }, []);

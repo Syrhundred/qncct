@@ -139,9 +139,19 @@ export const fetchEvents = createAsyncThunk<IEvent[], FetchEventsParams | void>(
 export const fetchEventById = createAsyncThunk<IEvent, string>(
   "event/fetchEventById",
   async (id) => {
+    let accessToken;
+    if (typeof window !== "undefined") {
+      accessToken = localStorage.getItem("access_token") || "";
+    }
     try {
-      const res = await fetch(`${baseUrl}/api/v1/events/${id}`);
+      const res = await fetch(`${baseUrl}/api/v1/events/${id}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
       const data = await res.json();
+      console.log(data);
 
       return data as IEvent;
     } catch (error) {
@@ -166,8 +176,29 @@ export const joinEvent = createAsyncThunk(
         },
       });
     } catch (error) {
-      console.error("Fetch event by id error:", error);
-      throw new Error("Failed to fetch event by id");
+      console.error("join error", error);
+      throw new Error("join error");
+    }
+  },
+);
+
+export const unjoinEvent = createAsyncThunk(
+  "event/unjoinEvent",
+  async (id: string | undefined) => {
+    let accessToken;
+    if (typeof window !== "undefined") {
+      accessToken = localStorage.getItem("access_token") || "";
+    }
+    try {
+      await fetch(`${baseUrl}/api/v1/events/${id}/unjoin`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+    } catch (error) {
+      console.log(error);
+      throw new Error("unjoin error");
     }
   },
 );

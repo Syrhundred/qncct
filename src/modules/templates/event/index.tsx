@@ -55,8 +55,11 @@ export default function Event() {
     setIsModalOpen(true);
   };
 
+  const handleUnjoinButton = () => {};
+
   const onConfirm = () => {
     dispatch(joinEvent(event?.id));
+    setIsModalOpen(false);
   };
 
   useEffect(() => {
@@ -166,6 +169,14 @@ export default function Event() {
 
           {event.created_by?.profile?.username === user?.profile?.username ? (
             <p>You have created this event!</p>
+          ) : event.is_joined ? (
+            <Button
+              onClick={handleJoinButton}
+              className="bg-none border text-primary-purple"
+              buttonText="Unjoin"
+              buttonType="button"
+              state={false}
+            />
           ) : (
             <Button
               onClick={handleJoinButton}

@@ -4,23 +4,16 @@ import { Container } from "@/modules/shared/ui/core/Container";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import Select from "react-select";
 import * as Yup from "yup";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "@/store";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/store";
 import { completeRegistration } from "@/store/authSlice";
 import Button from "@/modules/shared/ui/button/Button";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { components } from "react-select";
 import { setCookie } from "@/shared/lib/cookies";
-
-const interestsOptions = [
-  { value: "technology", label: "Technology" },
-  { value: "sports", label: "Sports" },
-  { value: "music", label: "Music" },
-  { value: "gaming", label: "Gaming" },
-  { value: "travel", label: "Travel" },
-  { value: "books", label: "Books" },
-];
+import { useAppSelector } from "@/shared/hooks/useAppSelector";
+import { fetchCategories } from "@/store/categorySlice";
 
 const usernameSchema = Yup.object().shape({
   username: Yup.string()
@@ -43,12 +36,17 @@ const interestsSchema = Yup.object().shape({
 
 export default function CompleteRegistration() {
   const dispatch = useDispatch<AppDispatch>();
-  const { loading, error } = useSelector((state: RootState) => state.auth);
+  const { loading, error } = useAppSelector((state) => state.auth);
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [isUsernameCreated, setIsUsernameCreated] = useState<boolean | null>(
     null,
   );
+  const { categories } = useAppSelector((state) => state.category);
+
+  useEffect(() => {
+    dispatch(fetchCategories());
+  }, [dispatch]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-white">
@@ -126,7 +124,10 @@ export default function CompleteRegistration() {
                 <Form className="flex flex-col items-center gap-4 mt-5">
                   <div className="w-64">
                     <Select
-                      options={interestsOptions}
+                      options={categories.map((cat) => ({
+                        value: cat.id,
+                        label: cat.name,
+                      }))}
                       isMulti
                       isSearchable={false} // ← ключевая строка
                       name="interests"

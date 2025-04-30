@@ -68,7 +68,7 @@ export default function EventCard({ event }: { event: IEvent }) {
           </span>
         </div>
       </div>
-      <div className="p-3 flex flex-col gap-3">
+      <div className="p-3 flex flex-col justify-between h-32">
         <h3 className="font-semibold">{event.name}</h3>
         <div className="flex justify-between items-start text-xs">
           <span className="flex items-start gap-1">

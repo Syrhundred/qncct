@@ -43,7 +43,6 @@ export const verifyToken = createAsyncThunk(
   },
 );
 
-// Generic function for verification
 const verifyRequest = async (
   url: string,
   body: object,

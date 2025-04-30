@@ -38,6 +38,7 @@ export interface IEvent {
   latitude: number;
   description: string;
   longitude: number;
+  is_joined: boolean;
   category: {
     id: string;
     name: string;

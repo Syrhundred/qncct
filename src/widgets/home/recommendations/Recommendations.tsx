@@ -1,21 +1,24 @@
 import { Container } from "@/modules/shared/ui/core/Container";
 import { useAppSelector } from "@/shared/hooks/useAppSelector";
 import { useEffect } from "react";
-import { AppDispatch, RootState } from "@/store";
+import { AppDispatch } from "@/store";
 import { fetchEvents } from "@/store/eventSlice";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import EventCard from "@/shared/ui/event-card/EventCard";
 import EventCardSkeleton from "@/shared/ui/skeletons/EventCardSkeleton";
 import { fetchCurrentUser } from "@/store/userSlice";
 
 export default function Recommendations() {
   const events = useAppSelector((state) => state.event.events);
-  const { isLoading, error } = useSelector((state: RootState) => state.event);
+  const { isLoading, error } = useAppSelector((state) => state.event);
   const dispatch = useDispatch<AppDispatch>();
+  const { isAuth } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     dispatch(fetchEvents());
-    dispatch(fetchCurrentUser());
+    if (isAuth) {
+      dispatch(fetchCurrentUser());
+    }
   }, [dispatch]);
 
   return (

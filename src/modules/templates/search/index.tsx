@@ -11,7 +11,7 @@ export default function SearchMap() {
     <div>
       <div className="w-full absolute z-50 flex flex-col items-center pt-6">
         <Container>
-          <SearchBar />
+          <SearchBar isMainPage={false} />
           <InterestsFilter
             selectedInterests={selectedInterests}
             setSelectedInterests={setSelectedInterests}

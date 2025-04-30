@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import FilterBottomSheet from "@/widgets/header/FilterBottomSheet";
 
-export default function SearchBar() {
+export default function SearchBar({ isMainPage }: { isMainPage: boolean }) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const filterId = "search-filter";
 
@@ -45,13 +45,15 @@ export default function SearchBar() {
       <div className="absolute left-3 flex items-center">
         <Search className="text-lightgray opacity-20" />
       </div>
-      <button
-        type="button"
-        onClick={() => setIsFilterOpen(true)}
-        className="absolute right-3 flex items-center"
-      >
-        <SlidersHorizontal />
-      </button>
+      {!isMainPage && (
+        <button
+          type="button"
+          onClick={() => setIsFilterOpen(true)}
+          className="absolute right-3 flex items-center"
+        >
+          <SlidersHorizontal />
+        </button>
+      )}
 
       <FilterBottomSheet open={isFilterOpen} onCloseId={filterId} />
     </div>

@@ -28,7 +28,7 @@ export default function Header() {
               />
             </button>
           </div>
-          <SearchBar />
+          <SearchBar isMainPage={true} />
         </div>
       </Container>
     </header>
