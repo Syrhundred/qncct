@@ -55,7 +55,7 @@ export default function Event() {
     setIsModalOpen(true);
   };
 
-  const handleUnjoinButton = () => {};
+  // const handleUnjoinButton = () => {};
 
   const onConfirm = () => {
     dispatch(joinEvent(event?.id));

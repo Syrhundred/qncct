@@ -2,9 +2,9 @@
 import { useEffect, useState } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { loginUser } from "@/store/authSlice";
-import { AppDispatch, RootState } from "@/store";
+import { AppDispatch } from "@/store";
 import { useRouter } from "next/navigation";
 import { Container } from "@/modules/shared/ui/core/Container";
 import Link from "next/link";
