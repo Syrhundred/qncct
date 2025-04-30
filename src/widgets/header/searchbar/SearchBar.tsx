@@ -7,7 +7,6 @@ import FilterBottomSheet from "@/widgets/header/FilterBottomSheet";
 
 export default function SearchBar() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  // Define a unique ID for this filter instance
   const filterId = "search-filter";
 
   useEffect(() => {

@@ -89,39 +89,45 @@ export const fetchEvents = createAsyncThunk<IEvent[], FetchEventsParams | void>(
   "event/fetchEvents",
   async (params) => {
     try {
-      let queryString = "";
+      const searchParams: SearchParamsObject = {};
 
       if (params) {
-        // Create a properly typed params object for URLSearchParams
-        const searchParams: SearchParamsObject = {};
+        // Используем либо date_filter, либо custom_date
+        if (params.date_filter) {
+          searchParams.date_filter = params.date_filter;
+        } else if (params.custom_date) {
+          searchParams.custom_date = params.custom_date;
+        }
 
-        // Add only defined params with proper string conversion
-        if (params.date_filter) searchParams.date_filter = params.date_filter;
-        if (params.custom_date) searchParams.custom_date = params.custom_date;
-        if (params.lat !== undefined) searchParams.lat = params.lat.toString();
-        if (params.lon !== undefined) searchParams.lon = params.lon.toString();
-        if (params.radius_km !== undefined)
+        if (params.lat !== undefined) {
+          searchParams.lat = params.lat.toString();
+        }
+
+        if (params.lon !== undefined) {
+          searchParams.lon = params.lon.toString();
+        }
+
+        if (params.radius_km !== undefined) {
           searchParams.radius_km = params.radius_km.toString();
-        if (params.search) searchParams.search = params.search;
+        }
 
-        // Handle interests array
+        if (params.search) {
+          searchParams.search = params.search;
+        }
+
         if (params.interests && params.interests.length > 0) {
           searchParams.interests = params.interests.join(",");
         }
-
-        queryString = "?" + new URLSearchParams(searchParams).toString();
       }
 
-      if (queryString) {
-        const res = await fetch(
-          `${baseUrl}/api/v1/events/filter${queryString}`,
-        );
-        const data = await res.json();
-        return data as IEvent[];
-      }
+      const queryString =
+        Object.keys(searchParams).length > 0
+          ? "?" + new URLSearchParams(searchParams).toString()
+          : "";
 
-      const res = await fetch(`${baseUrl}/api/v1/events/`);
+      const res = await fetch(`${baseUrl}/api/v1/events/filter${queryString}`);
       const data = await res.json();
+
       return data as IEvent[];
     } catch (error) {
       console.error("Fetch events error:", error);
