@@ -36,7 +36,7 @@ export default function SearchBar() {
     <div className="relative flex items-center">
       <Link href={"/search"} className="w-full">
         <input
-          className="w-full pl-12 p-3 rounded-lg focus:outline-none text-sm placeholder-lightgray placeholder-opacity-20"
+          className="w-full pl-12 p-3 rounded-lg focus:outline-none placeholder-lightgray placeholder-opacity-20"
           name="search"
           type="text"
           placeholder="Search"

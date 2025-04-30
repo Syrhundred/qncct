@@ -90,7 +90,7 @@ export default function Login() {
                     type="text" // ✅ Changed to text to support email and phone
                     name="identifier"
                     placeholder="Email or Phone Number"
-                    className="border p-3 rounded-lg text-sm w-full"
+                    className="border p-3 rounded-lg w-full"
                   />
                   <ErrorMessage
                     name="identifier"
@@ -104,7 +104,7 @@ export default function Login() {
                     type={passwordVisible ? "text" : "password"}
                     name="password"
                     placeholder="Password"
-                    className="border p-3 rounded-lg text-sm w-full pr-10"
+                    className="border p-3 rounded-lg w-full pr-10"
                   />
                   <button
                     type="button"
