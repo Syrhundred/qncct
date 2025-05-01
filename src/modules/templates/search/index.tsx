@@ -4,6 +4,7 @@ import { Container } from "@/modules/shared/ui/core/Container";
 import YandexMap from "@/shared/ui/map/YandexMap";
 import InterestsFilter from "@/widgets/header/InterestsFilter";
 import { useState } from "react";
+
 export default function SearchMap() {
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
 
