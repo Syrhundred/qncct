@@ -51,10 +51,9 @@ export default function GeocodeMap({
     return [latitude, longitude]; // ✔️ Yandex: [lng, lat]
   };
 
-  // Центрируем карту, когда userCoords загрузились
   useEffect(() => {
     if (mapRef.current && userCoords) {
-      mapRef.current?.setCenter(userCoords, userLocationZoom);
+      mapRef.current?.setCenter(userCoords, ZOOM);
     }
   }, [userCoords]);
 
@@ -100,7 +99,7 @@ export default function GeocodeMap({
   const centerOnUserLocation = () => {
     console.log(userCoords);
     if (mapRef.current && userCoords) {
-      mapRef.current.setCenter(userCoords, ZOOM);
+      mapRef.current.setCenter(userCoords, userLocationZoom);
     }
   };
 
