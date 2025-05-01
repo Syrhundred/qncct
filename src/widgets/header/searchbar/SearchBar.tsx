@@ -34,14 +34,14 @@ export default function SearchBar({ isMainPage }: { isMainPage: boolean }) {
 
   return (
     <div className="relative flex items-center">
-      <Link href={"/search"} className="w-full">
+      <div className="w-full">
         <input
           className="w-full pl-12 p-3 rounded-lg focus:outline-none placeholder-lightgray placeholder-opacity-20"
           name="search"
           type="text"
           placeholder="Search"
         />
-      </Link>
+      </div>
       <div className="absolute left-3 flex items-center">
         <Search className="text-lightgray opacity-20" />
       </div>

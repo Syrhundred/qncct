@@ -3,6 +3,7 @@ import { MapPin } from "lucide-react";
 import Image from "next/image";
 import SearchBar from "@/widgets/header/searchbar/SearchBar";
 import { useAppSelector } from "@/shared/lib/storeHooks";
+import Link from "next/link";
 
 export default function Header() {
   const city = useAppSelector((state) => state.userLocation.city);
@@ -28,7 +29,9 @@ export default function Header() {
               />
             </button>
           </div>
-          <SearchBar isMainPage={true} />
+          <Link href="/search">
+            <SearchBar isMainPage={true} />
+          </Link>
         </div>
       </Container>
     </header>
