@@ -5,6 +5,7 @@ import { Provider } from "react-redux";
 import { store } from "@/store";
 import Script from "next/script";
 import { Poppins } from "next/font/google";
+import Toaster from "@/shared/ui/toaster/Toaster";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -29,6 +30,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`bg-background ${poppins.className}`}>
+        <Toaster />
         <Provider store={store}>{children}</Provider>
       </body>
     </html>

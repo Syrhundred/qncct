@@ -210,6 +210,11 @@ const eventSlice = createSlice({
     setSelectedEvent(state, action: PayloadAction<IEvent | null>) {
       state.selectedEvent = action.payload;
     },
+    setEventJoinState(state, action: PayloadAction<boolean>) {
+      if (state.selectedEvent) {
+        state.selectedEvent.is_joined = action.payload;
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -279,6 +284,6 @@ const eventSlice = createSlice({
   },
 });
 
-export const { setSelectedEvent } = eventSlice.actions;
+export const { setEventJoinState, setSelectedEvent } = eventSlice.actions;
 
 export default eventSlice.reducer;

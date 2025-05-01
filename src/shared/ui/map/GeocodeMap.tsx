@@ -41,6 +41,7 @@ export default function GeocodeMap({
 
   const FALLBACK_CENTER: [number, number] = [43.238, 76.886]; // Алматы
   const ZOOM = 12;
+  const userLocationZoom = 16;
   const normalizeCoordinates = (
     lng: number | string,
     ltd: number | string,
@@ -53,7 +54,7 @@ export default function GeocodeMap({
   // Центрируем карту, когда userCoords загрузились
   useEffect(() => {
     if (mapRef.current && userCoords) {
-      mapRef.current?.setCenter(userCoords, ZOOM);
+      mapRef.current?.setCenter(userCoords, userLocationZoom);
     }
   }, [userCoords]);
 
@@ -95,6 +96,14 @@ export default function GeocodeMap({
     return null;
   };
 
+  // Function to center map on user location
+  const centerOnUserLocation = () => {
+    console.log(userCoords);
+    if (mapRef.current && userCoords) {
+      mapRef.current.setCenter(userCoords, ZOOM);
+    }
+  };
+
   return (
     <MapContainer size={containerSize}>
       <YandexMap
@@ -124,6 +133,22 @@ export default function GeocodeMap({
         {/*    }}*/}
         {/*  />*/}
         {/*)}*/}
+
+        {/* 🔵 User Location Marker */}
+        {userCoords && (
+          <Placemark
+            geometry={userCoords}
+            properties={{
+              hintContent: "Your location",
+              balloonContent: "You are here",
+            }}
+            options={{
+              preset: "islands#blueCircleDotIcon", // Blue dot with outer circle
+              iconColor: "#4F46E5", // Indigo color matching the button
+              zIndex: 1000, // Make sure it appears above other markers
+            }}
+          />
+        )}
 
         {/* 🔵 Метки всех ивентов */}
         {events.map((event) => {
@@ -155,6 +180,35 @@ export default function GeocodeMap({
           );
         })}
       </YandexMap>
+
+      {/* Location button */}
+      <button
+        onClick={centerOnUserLocation}
+        className="absolute bottom-4 right-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg"
+        aria-label="Center on my location"
+        disabled={isUserLocationLoading || !userCoords}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 4.5v15m7.5-7.5h-15"
+          />
+        </svg>
+      </button>
     </MapContainer>
   );
 }

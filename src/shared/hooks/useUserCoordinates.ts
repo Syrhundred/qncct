@@ -6,7 +6,7 @@ export const useUserCoordinates = () => {
 
   const coords: [number, number] | null = useMemo(() => {
     if (userLocation.coords) {
-      return [userLocation.coords.lng, userLocation.coords.lat];
+      return [userLocation.coords.lat, userLocation.coords.lng];
     }
     return null;
   }, [userLocation.coords]);

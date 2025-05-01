@@ -17,14 +17,11 @@ import YandexMap from "@/shared/ui/map/YandexMap";
 import EventSkeleton from "@/shared/ui/skeletons/EventSkeleton";
 import Button from "@/modules/shared/ui/button/Button";
 import Link from "next/link";
-import {
-  fetchEventById,
-  joinEvent,
-  setSelectedEvent,
-} from "@/store/eventSlice";
+import { fetchEventById, setSelectedEvent } from "@/store/eventSlice";
 import { getDistanceInKm } from "@/shared/utils/getDistanceInKm";
 import Modal from "@/shared/ui/modal/Modal";
 import Image from "next/image";
+import { useJoinEvent } from "@/shared/hooks/useJoinEvent";
 
 export default function Event() {
   const params = useParams();
@@ -38,7 +35,6 @@ export default function Event() {
   const [distance, setDistance] = useState<string>("");
   const userCoords = useAppSelector((state) => state.userLocation.coords);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const user = useAppSelector((state) => state.user);
 
   const normalizeCoordinates = (
     lng: number | string,
@@ -51,14 +47,10 @@ export default function Event() {
       ? normalizeCoordinates(event?.longitude, event?.latitude)
       : undefined;
 
-  const handleJoinButton = () => {
-    setIsModalOpen(true);
-  };
+  const { handleJoin, handleUnjoin, isJoined, isOwner } = useJoinEvent(event);
 
-  // const handleUnjoinButton = () => {};
-
-  const onConfirm = () => {
-    dispatch(joinEvent(event?.id));
+  const onConfirm = async () => {
+    await handleJoin();
     setIsModalOpen(false);
   };
 
@@ -167,19 +159,18 @@ export default function Event() {
             )}
           </div>
 
-          {event.created_by?.profile?.username === user?.profile?.username ? (
+          {isOwner ? (
             <p>You have created this event!</p>
-          ) : event.is_joined ? (
-            <Button
-              onClick={handleJoinButton}
-              className="bg-none border text-primary-purple"
-              buttonText="Unjoin"
-              buttonType="button"
-              state={false}
-            />
+          ) : isJoined ? (
+            <button
+              className="w-full border border-primary-purple rounded-xl transition-all durarion-300 text-primary-purple text-sm font-semibold p-3 hover:bg-gradient hover:text-white"
+              onClick={handleUnjoin}
+            >
+              Unjoin
+            </button>
           ) : (
             <Button
-              onClick={handleJoinButton}
+              onClick={() => setIsModalOpen(true)}
               buttonText="Join"
               buttonType="button"
               state={false}
