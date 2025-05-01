@@ -1,13 +1,11 @@
 import { IEvent } from "@/shared/types/types";
 import { CalendarDays, MapPin } from "lucide-react";
 import dayjs from "dayjs";
-import SmallButton from "@/modules/shared/ui/button/SmallButton";
 import Link from "next/link";
 import { getDistanceInKm } from "@/shared/utils/getDistanceInKm";
 import { useAppSelector } from "@/shared/hooks/useAppSelector";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { useJoinEvent } from "@/shared/hooks/useJoinEvent";
 
 export default function EventCard({ event }: { event: IEvent }) {
   const formattedDate = dayjs(event.date).format("D MMMM YYYY");
@@ -29,7 +27,7 @@ export default function EventCard({ event }: { event: IEvent }) {
       ? normalizeCoordinates(event?.longitude, event?.latitude)
       : undefined;
 
-  const { handleJoin, isOwner } = useJoinEvent(event);
+  // const { handleJoin, isOwner } = useJoinEvent(event);
 
   useEffect(() => {
     if (userCoords && coords) {
@@ -97,17 +95,17 @@ export default function EventCard({ event }: { event: IEvent }) {
             />
             {event.created_by?.profile?.username}
           </span>
-          {!isOwner && (
-            <SmallButton
-              buttonText="Join"
-              state={false}
-              buttonType="button"
-              size="px-11 py-2"
-              onClick={() => {
-                handleJoin();
-              }}
-            />
-          )}
+          {/*{!isOwner && (*/}
+          {/*  <SmallButton*/}
+          {/*    buttonText="Join"*/}
+          {/*    state={false}*/}
+          {/*    buttonType="button"*/}
+          {/*    size="px-11 py-2"*/}
+          {/*    onClick={() => {*/}
+          {/*      handleJoin();*/}
+          {/*    }}*/}
+          {/*  />*/}
+          {/*)}*/}
         </div>
       </div>
     </Link>

@@ -1,3 +1,4 @@
+"use client";
 import { Container } from "@/modules/shared/ui/core/Container";
 import { useAppSelector } from "@/shared/hooks/useAppSelector";
 import { useEffect } from "react";

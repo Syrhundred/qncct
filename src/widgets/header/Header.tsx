@@ -1,12 +1,20 @@
+// Header.tsx
+"use client";
+
 import { Container } from "@/modules/shared/ui/core/Container";
 import { MapPin } from "lucide-react";
 import Image from "next/image";
 import SearchBar from "@/widgets/header/searchbar/SearchBar";
 import { useAppSelector } from "@/shared/lib/storeHooks";
 import Link from "next/link";
+import { useInitUserLocation } from "@/shared/hooks/useInitUserLocation";
 
 export default function Header() {
-  const city = useAppSelector((state) => state.userLocation.city);
+  const { isAuth } = useAppSelector((state) => state.auth);
+  const { city } = useAppSelector((state) => state.userLocation); // Получаем данные о городе из Redux
+
+  // Инициализируем местоположение пользователя, если он авторизован
+  useInitUserLocation(isAuth);
 
   return (
     <header>

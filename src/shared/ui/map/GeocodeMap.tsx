@@ -1,21 +1,17 @@
 "use client";
 
-import { Map as YandexMap, Placemark, useYMaps } from "@pbe/react-yandex-maps";
+import { Map as YandexMap, Placemark } from "@pbe/react-yandex-maps";
 import type { Map as YMapType } from "yandex-maps";
-import type { MapEvent, IEvent } from "yandex-maps";
 import { useAppSelector } from "@/shared/hooks/useAppSelector";
 import { useEffect, useRef, useState } from "react";
-import { IGeocodeResult } from "yandex-maps";
 import { AppDispatch } from "@/store";
 import { useDispatch } from "react-redux";
 import { fetchEvents } from "@/store/eventSlice";
 import { useUserCoordinates } from "@/shared/hooks/useUserCoordinates";
 import MapContainer from "@/shared/ui/map/MapContainer";
-
-interface IAddress {
-  location: string;
-  route: string;
-}
+import { IEvent } from "@/shared/types/types";
+import { LocateFixed } from "lucide-react";
+import EventCard from "@/shared/ui/event-card/EventCard";
 
 export default function GeocodeMap({
   containerSize,
@@ -26,22 +22,21 @@ export default function GeocodeMap({
   currentEvent?: [number, number];
   selectedInterests?: string[];
 }) {
-  const ymaps = useYMaps(["geocode"]);
   const mapRef = useRef<YMapType | undefined>(undefined);
   const dispatch = useDispatch<AppDispatch>();
-
-  const [coordinates, setCoordinates] = useState<[number, number] | null>(null);
-  const [address, setAddress] = useState<IAddress | null>(null);
-  console.log(coordinates, address); // TODO: USE them
+  const [selectedEvent, setSelectedEvent] = useState<IEvent | null>(null);
+  const [showEventDetails, setShowEventDetails] = useState(false);
+  const [detailsPanelState, setDetailsPanelState] = useState("closed");
+  const [activePlacemark, setActivePlacemark] = useState<number | null>(null);
 
   const events = useAppSelector((state) => state.event.events);
   const { coords: userCoords, isLoading: isUserLocationLoading } =
     useUserCoordinates();
-  console.log(isUserLocationLoading); // TODO: USE IT
 
-  const FALLBACK_CENTER: [number, number] = [43.238, 76.886]; // Алматы
+  const FALLBACK_CENTER: [number, number] = [43.238, 76.886];
   const ZOOM = 12;
   const userLocationZoom = 16;
+
   const normalizeCoordinates = (
     lng: number | string,
     ltd: number | string,
@@ -52,12 +47,6 @@ export default function GeocodeMap({
   };
 
   useEffect(() => {
-    if (mapRef.current && userCoords) {
-      mapRef.current?.setCenter(userCoords, ZOOM);
-    }
-  }, [userCoords]);
-
-  useEffect(() => {
     if (selectedInterests && selectedInterests.length > 0) {
       dispatch(fetchEvents({ interests: selectedInterests }));
     } else {
@@ -65,39 +54,63 @@ export default function GeocodeMap({
     }
   }, [dispatch, selectedInterests]);
 
-  const handleClickMap = (e: MapEvent<IEvent>) => {
-    const coords = e.get("coords") as [number, number];
-    if (coords) {
-      setCoordinates(coords);
+  useEffect(() => {
+    if (mapRef.current && userCoords) {
+      mapRef.current.setCenter(userCoords, ZOOM);
+    }
+  }, [userCoords]);
+
+  const handleClickMap = () => {
+    if (showEventDetails) closeEventDetails();
+    setActivePlacemark(null);
+  };
+
+  const handleEventClick = (event: IEvent) => {
+    if (event.id !== undefined) {
+      const eventId = Number(event.id);
+      setActivePlacemark(eventId);
     }
 
-    if (ymaps) {
-      ymaps.geocode(coords).then((result) => {
-        const foundAddress = handleGeoResult(result);
-        if (foundAddress) {
-          setAddress(foundAddress);
-        } else {
-          console.error("GeoCode failed");
-          setAddress(null);
-        }
-      });
+    setDetailsPanelState("opening");
+    setSelectedEvent(event);
+    setShowEventDetails(true);
+
+    setTimeout(() => {
+      setDetailsPanelState("open");
+    }, 50);
+
+    if (mapRef.current && event.latitude && event.longitude) {
+      const eventCoords = normalizeCoordinates(event.longitude, event.latitude);
+      mapRef.current.setCenter(eventCoords, ZOOM);
     }
   };
 
-  const handleGeoResult = (result: IGeocodeResult) => {
-    const firstGeoObject = result.geoObjects.get(0);
-    if (firstGeoObject) {
-      const properties = firstGeoObject.properties;
-      const location = String(properties.get("description", {}));
-      const route = String(properties.get("name", {}));
-      return { location, route };
-    }
-    return null;
+  const closeEventDetails = () => {
+    setDetailsPanelState("closing");
+    setTimeout(() => {
+      setShowEventDetails(false);
+      setDetailsPanelState("closed");
+      setActivePlacemark(null);
+    }, 300);
   };
 
   const centerOnUserLocation = () => {
     if (mapRef.current && userCoords) {
       mapRef.current.setCenter(userCoords, userLocationZoom);
+    }
+  };
+
+  const getDetailsPanelClasses = () => {
+    const baseClasses = `absolute bottom-0 left-0 right-0 shadow-lg rounded-t-xl max-h-[80%] overflow-y-auto transition-all duration-300 ease-in-out`;
+
+    switch (detailsPanelState) {
+      case "opening":
+      case "closing":
+        return `${baseClasses} transform translate-y-full opacity-0`;
+      case "open":
+        return `${baseClasses} transform translate-y-0 opacity-100`;
+      default:
+        return `${baseClasses} transform translate-y-full opacity-0`;
     }
   };
 
@@ -108,30 +121,16 @@ export default function GeocodeMap({
         defaultState={{
           center: currentEvent ?? FALLBACK_CENTER,
           zoom: ZOOM,
+          type: "yandex#map",
         }}
-        width="100%"
-        height="100%"
         onClick={handleClickMap}
         options={{
           suppressMapOpenBlock: true,
           yandexMapDisablePoiInteractivity: true,
         }}
+        width="100%"
+        height="100%"
       >
-        {/* 🟢 Метка по клику */}
-        {/*{coordinates && (*/}
-        {/*  <Placemark*/}
-        {/*    geometry={coordinates}*/}
-        {/*    options={{*/}
-        {/*      iconColor: "#ff0000",*/}
-        {/*      preset: "islands#dotIcon",*/}
-        {/*    }}*/}
-        {/*    properties={{*/}
-        {/*      balloonContent: "Вы нажали сюда!",*/}
-        {/*    }}*/}
-        {/*  />*/}
-        {/*)}*/}
-
-        {/* 🔵 User Location Marker */}
         {userCoords && (
           <Placemark
             geometry={userCoords}
@@ -140,72 +139,99 @@ export default function GeocodeMap({
               balloonContent: "You are here",
             }}
             options={{
-              preset: "islands#blueCircleDotIcon", // Blue dot with outer circle
-              iconColor: "#4F46E5", // Indigo color matching the button
-              zIndex: 1000, // Make sure it appears above other markers
+              preset: "islands#blueCircleDotIcon",
+              iconColor: "#4F46E5",
+              zIndex: 1000,
             }}
           />
         )}
 
-        {/* 🔵 Метки всех ивентов */}
         {events.map((event) => {
           if (!event.latitude || !event.longitude) return null;
           const coords = normalizeCoordinates(event.longitude, event.latitude);
+          const eventId = Number(event.id);
+          const isActive =
+            event.id !== undefined && activePlacemark === eventId;
+
           return (
             <Placemark
               key={event.id}
               geometry={coords}
+              onClick={() => handleEventClick(event)}
               properties={{
-                iconContent: `<div
-              className="scale-0 opacity-0 animate-[bounceIn_0.5s_ease_forwards]"
-                style={{animationName: 'bounceIn'}}>${event.name}</div>`,
+                iconContent: isActive
+                  ? `<div class="pulse-animation">${event.name}</div>`
+                  : event.name,
                 hintContent: event.name,
-                balloonContentHeader: `<b>${event.name}</b>`,
-                balloonContentBody: `<div><img alt="balloon" src="${event.images[0]?.url}" width="100%" /><p>${event.date}</p></div>`,
-                balloonContentFooter: `<small>${event.date}</small>`,
               }}
               options={{
                 iconLayout: "default#image",
-                iconImageHref: "https://img.icons8.com/color/48/marker.png",
-                iconImageSize: [32, 32],
-                iconImageOffset: [-16, -42],
-                balloonCloseButton: true,
-                hideIconOnBalloonOpen: false,
-                balloonMaxWidth: 300,
+                iconImageHref: "/assets/img/map/placemaker.png",
+                iconImageSize: isActive ? [50, 50] : [30, 30],
+                iconImageOffset: isActive ? [-20, -50] : [-16, -42],
+                cursor: "pointer",
               }}
             />
           );
         })}
       </YandexMap>
 
-      {/* Location button */}
-      <button
-        onClick={centerOnUserLocation}
-        className="absolute bottom-24 right-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg"
-        aria-label="Center on my location"
-        disabled={isUserLocationLoading || !userCoords}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
+      {/* Animations */}
+      <style jsx global>{`
+        @keyframes pulseMarker {
+          0% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.2);
+          }
+          100% {
+            transform: scale(1);
+          }
+        }
+
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
+
+      {/* Control buttons */}
+      <div className="absolute bottom-24 right-4">
+        {/* Location center button */}
+        <button
+          onClick={centerOnUserLocation}
+          className="bg-white text-primary-purple rounded-full w-12 h-12 flex items-center justify-center shadow-lg transition-transform duration-200 hover:scale-110"
+          aria-label="Center on my location"
+          disabled={isUserLocationLoading || !userCoords}
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 4.5v15m7.5-7.5h-15"
-          />
-        </svg>
-      </button>
+          <LocateFixed />
+        </button>
+      </div>
+
+      {/* Event details panel with EventCard */}
+      {showEventDetails && selectedEvent && (
+        <div className={getDetailsPanelClasses()}>
+          <div className="flex p-4 justify-center">
+            <EventCard event={selectedEvent} />
+          </div>
+        </div>
+      )}
     </MapContainer>
   );
 }
