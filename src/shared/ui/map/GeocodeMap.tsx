@@ -181,7 +181,7 @@ export default function GeocodeMap({
       {/* Location button */}
       <button
         onClick={centerOnUserLocation}
-        className="absolute bottom-14 right-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg"
+        className="absolute bottom-24 right-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg"
         aria-label="Center on my location"
         disabled={isUserLocationLoading || !userCoords}
       >
