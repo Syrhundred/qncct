@@ -48,7 +48,7 @@ export default function GeocodeMap({
   ): [number, number] => {
     const latitude = typeof ltd === "string" ? parseFloat(ltd) : ltd;
     const longitude = typeof lng === "string" ? parseFloat(lng) : lng;
-    return [latitude, longitude]; // ✔️ Yandex: [lng, lat]
+    return [latitude, longitude];
   };
 
   useEffect(() => {
@@ -95,9 +95,7 @@ export default function GeocodeMap({
     return null;
   };
 
-  // Function to center map on user location
   const centerOnUserLocation = () => {
-    console.log(userCoords);
     if (mapRef.current && userCoords) {
       mapRef.current.setCenter(userCoords, userLocationZoom);
     }
@@ -183,7 +181,7 @@ export default function GeocodeMap({
       {/* Location button */}
       <button
         onClick={centerOnUserLocation}
-        className="absolute bottom-4 right-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg"
+        className="absolute bottom-14 right-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg"
         aria-label="Center on my location"
         disabled={isUserLocationLoading || !userCoords}
       >
