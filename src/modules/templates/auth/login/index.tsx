@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Formik, Form, Field, ErrorMessage } from "formik";
+import { Formik, Form, Field, ErrorMessage, FormikHelpers } from "formik";
 import * as Yup from "yup";
 import { useDispatch } from "react-redux";
-import { loginUser } from "@/store/authSlice";
+import { loginUser, clearError, fetchUserProfile } from "@/store/authSlice";
 import { AppDispatch } from "@/store";
 import { useRouter } from "next/navigation";
 import { Container } from "@/modules/shared/ui/core/Container";
@@ -12,6 +12,7 @@ import Image from "next/image";
 import Button from "@/modules/shared/ui/button/Button";
 import { useAppSelector } from "@/shared/hooks/useAppSelector";
 
+// Validation schema for login form
 const validationSchema = Yup.object({
   identifier: Yup.string()
     .test(
@@ -20,7 +21,7 @@ const validationSchema = Yup.object({
       (value) => {
         if (!value) return false;
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const phoneRegex = /^\+?\d{10,15}$/;
+        const phoneRegex = /^\+?[0-9]{10,15}$/;
         return emailRegex.test(value) || phoneRegex.test(value);
       },
     )
@@ -32,37 +33,53 @@ const validationSchema = Yup.object({
 
 export default function Login() {
   const dispatch = useDispatch<AppDispatch>();
-  const { loading } = useAppSelector((state) => state.auth);
-  const { error, isAuth, user } = useAppSelector((state) => state.auth);
   const router = useRouter();
+
+  // Get auth state from Redux
+  const { loading, error, isAuth } = useAppSelector((state) => state.auth);
+
+  // Local state
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [errorFromBack, setErrorFromBack] = useState("");
   const [isClient, setIsClient] = useState(false);
 
+  // Handle client-side initialization
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    dispatch(clearError());
+  }, [dispatch]);
 
-  // Ensure localStorage is accessed only on the client side
-  const [isActive, setIsActive] = useState<string | null>(null);
-
+  // Handle authentication state changes
   useEffect(() => {
-    // Check for window object to make sure it's running in the browser
-    if (isClient) {
-      const activeStatus = localStorage.getItem("is_active");
-      setIsActive(activeStatus);
-    }
-  }, [isClient]);
+    if (isAuth && isClient) {
+      // Fetch user profile after successful authentication
+      dispatch(fetchUserProfile());
 
-  useEffect(() => {
-    if (isAuth) {
+      // Check if user is active
+      const isActive = localStorage.getItem("is_active");
+
       if (isActive === "true") {
         router.replace("/");
       } else {
         router.push("/complete-registration");
       }
     }
-  }, [isAuth, user, router, isActive]);
+  }, [isAuth, router, dispatch, isClient]);
+
+  interface LoginFormValues {
+    identifier: string;
+    password: string;
+  }
+
+  const handleSubmit = async (
+    values: LoginFormValues,
+    { setSubmitting }: FormikHelpers<LoginFormValues>,
+  ) => {
+    try {
+      await dispatch(loginUser(values));
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-white">
@@ -72,24 +89,17 @@ export default function Login() {
           <span className="text-lightgray text-xs text-center">
             Enter your email or phone number and password to continue.
           </span>
+
           <Formik
             initialValues={{ identifier: "", password: "" }}
             validationSchema={validationSchema}
-            onSubmit={async (values, { setSubmitting }) => {
-              const result = await dispatch(loginUser(values));
-
-              if (!loginUser.fulfilled.match(result)) {
-                setErrorFromBack("Invalid credentials. Please try again.");
-              }
-
-              setSubmitting(false);
-            }}
+            onSubmit={handleSubmit}
           >
             {({ isSubmitting }) => (
               <Form className="flex flex-col space-y-4">
                 <div>
                   <Field
-                    type="text" // ✅ Changed to text to support email and phone
+                    type="text"
                     name="identifier"
                     placeholder="Email or Phone Number"
                     className="border p-3 rounded-lg w-full"
@@ -142,6 +152,7 @@ export default function Login() {
                 >
                   Forgot Password?
                 </Link>
+
                 <Button
                   buttonType="submit"
                   state={isSubmitting || loading}
@@ -149,10 +160,10 @@ export default function Login() {
                 />
 
                 {error && <p className="text-red-500 text-sm">{error}</p>}
-                <p className="text-red-500 text-sm">{errorFromBack}</p>
               </Form>
             )}
           </Formik>
+
           <div className="flex gap-1">
             <span className="text-xs text-lightgray">
               Don&#39;t have an account?
@@ -164,10 +175,14 @@ export default function Login() {
               Sign Up
             </Link>
           </div>
+
           <div className="border-t h-[1px] w-full"></div>
+
           <div className="flex flex-col items-center gap-3">
             <span className="text-xs text-lightgray">Or continue with</span>
-            <Link href="https://web-production-f0f5.up.railway.app/api/v1/auth/google/login">
+            <Link
+              href={`${process.env.NEXT_PUBLIC_API_BASE_URL || "https://web-production-f0f5.up.railway.app"}/api/v1/auth/google/login`}
+            >
               <Image
                 width={40}
                 height={40}

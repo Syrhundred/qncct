@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from "next/server";
 
+// Define public paths that don't require authentication
 const PUBLIC_PATHS = [
   "/",
   "/login",
@@ -10,41 +11,70 @@ const PUBLIC_PATHS = [
   "/reset",
 ];
 
+// Define static resource paths to exclude from middleware processing
+const EXCLUDED_PATHS = ["/_next", "/static", "/api", "/assets", "/favicon.ico"];
+
+/**
+ * Middleware function to handle authentication and routing logic
+ * @param request - The incoming request
+ * @returns NextResponse with appropriate redirect or continuation
+ */
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Skip middleware for excluded paths
+  if (
+    EXCLUDED_PATHS.some((path) => pathname.startsWith(path)) ||
+    pathname.includes(".")
+  ) {
+    return NextResponse.next();
+  }
+
+  // Check if the current path is public
   const isPublic = PUBLIC_PATHS.includes(pathname);
 
+  // Get authentication tokens and user status from cookies
   const accessToken = request.cookies.get("access_token")?.value;
-  const isActive = request.cookies.get("is_active")?.value; // "true" | "false" | undefined
+  const isActive = request.cookies.get("is_active")?.value;
 
-  // 1. Нет токена => пускаем только на public-страницы
+  // CASE 1: No token - allow only public pages
   if (!accessToken) {
     if (!isPublic) {
-      const loginUrl = new URL("/login", request.url);
-      return NextResponse.redirect(loginUrl);
+      return NextResponse.redirect(new URL("/login", request.url));
     }
     return NextResponse.next();
   }
 
-  // 2. Пользователь НЕ активирован
+  // CASE 2: User not activated - redirect to complete registration
   if (isActive === "false") {
     if (pathname !== "/complete-registration") {
-      const completeUrl = new URL("/complete-registration", request.url);
-      return NextResponse.redirect(completeUrl);
+      return NextResponse.redirect(
+        new URL("/complete-registration", request.url),
+      );
     }
     return NextResponse.next();
   }
 
-  // 3. Пользователь активен, но лезет на /complete-registration
+  // CASE 3: Active user trying to access registration completion page
   if (isActive === "true" && pathname === "/complete-registration") {
-    const homeUrl = new URL("/", request.url);
-    return NextResponse.redirect(homeUrl);
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
-  // 4. Всё ок
+  // CASE 4: Auth token exists and path is valid - proceed
   return NextResponse.next();
 }
 
+// Configure which paths the middleware should run on
 export const config = {
-  matcher: ["/((?!_next|static|.*\\..*).*)"], // фильтруем статику и API
+  matcher: [
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder files (assets, images, etc.)
+     * - API routes (/api/*)
+     */
+    "/((?!_next/static|_next/image|favicon\\.ico|public/|api/).*)",
+  ],
 };

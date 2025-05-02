@@ -1,9 +1,10 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { AuthState, UserState } from "@/shared/types/types";
+import { ApiErrorShape, AuthState, UserState } from "@/shared/types/types";
 import { setCookie } from "@/shared/lib/cookies";
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+// Initial auth state
 const initialState: AuthState = {
   user: null,
   token:
@@ -13,11 +14,65 @@ const initialState: AuthState = {
   isAuth: false,
 };
 
-// Utility function for error handling
+/**
+ * Utility function for error handling
+ */
 const handleError = (error: unknown) => {
   return error instanceof Error ? error.message : "Unknown error";
 };
 
+const isApiErrorShape = (data: unknown): data is ApiErrorShape =>
+  typeof data === "object" && data !== null;
+
+export const extractApiError = (data: unknown): string => {
+  if (isApiErrorShape(data)) {
+    return data.detail ?? data.message ?? data.error ?? "Unknown error";
+  }
+  return "Unknown error";
+};
+
+/**
+ * Stores authentication tokens consistently across storage methods
+ */
+const storeAuthTokens = (
+  accessToken: string,
+  refreshToken: string,
+  isActive: boolean,
+) => {
+  // Store in localStorage
+  localStorage.setItem("access_token", accessToken);
+  localStorage.setItem("refresh_token", refreshToken);
+  localStorage.setItem("is_active", String(isActive));
+
+  // Calculate token expiration
+  const jwt = JSON.parse(atob(accessToken.split(".")[1]));
+  const accessMaxAge =
+    Math.max(jwt.exp * 1000 - Date.now(), 0) / 1000 || 60 * 60 * 24 * 7;
+
+  // Store in cookies
+  setCookie("access_token", accessToken, accessMaxAge);
+  setCookie("refresh_token", refreshToken, accessMaxAge * 2); // Longer expiry for refresh token
+  setCookie("is_active", String(isActive), 60 * 60 * 24 * 7);
+};
+
+/**
+ * Clear all auth tokens
+ */
+const clearAuthTokens = () => {
+  // Clear localStorage
+  localStorage.removeItem("access_token");
+  localStorage.removeItem("refresh_token");
+  localStorage.removeItem("is_active");
+
+  // Clear cookies
+  // removeCookie("access_token"); TODO: create removeCookie
+  // removeCookie("refresh_token");
+  // removeCookie("is_active");
+};
+
+/**
+ * Verify magic token for login
+ */
 export const verifyToken = createAsyncThunk(
   "auth/verifyToken",
   async (token: string, { rejectWithValue }) => {
@@ -27,55 +82,54 @@ export const verifyToken = createAsyncThunk(
         {
           method: "GET",
           headers: { "Content-Type": "application/json" },
+          credentials: "include",
         },
       );
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+      if (!res.ok) throw new Error(extractApiError(data));
 
-      localStorage.setItem("access_token", data.access_token);
-      localStorage.setItem("refresh_token", data.refresh_token);
+      storeAuthTokens(data.access_token, data.refresh_token, data.is_active);
 
-      return { token: data.access_token, user: data.user };
+      return { token: data.access_token };
     } catch (error) {
       return rejectWithValue(handleError(error));
     }
   },
 );
 
-const verifyRequest = async (
-  url: string,
-  body: object,
-  tokenRequired = false,
-) => {
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-  };
-
-  if (tokenRequired) {
-    headers["Authorization"] = `Bearer ${localStorage.getItem("access_token")}`;
-  }
+/**
+ * Make an authenticated request
+ */
+const authenticatedRequest = async (url: string, body: object) => {
+  const token = localStorage.getItem("access_token");
 
   const res = await fetch(url, {
     method: "POST",
-    headers,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify(body),
+    credentials: "include",
   });
 
   const data = await res.json();
-  if (!res.ok) throw new Error(data.message);
+  if (!res.ok) throw new Error(extractApiError(data));
 
   return data;
 };
 
+/**
+ * Request phone verification
+ */
 export const verifyPhone = createAsyncThunk(
   "auth/verifyPhone",
   async (phone_number: string, { rejectWithValue }) => {
     try {
-      await verifyRequest(
+      await authenticatedRequest(
         `${baseUrl}/api/v1/auth/request-number-verification`,
         { phone_number },
-        true,
       );
 
       return { phone_number };
@@ -85,6 +139,9 @@ export const verifyPhone = createAsyncThunk(
   },
 );
 
+/**
+ * Verify phone code
+ */
 export const verifyCode = createAsyncThunk(
   "auth/verifyCode",
   async (
@@ -95,22 +152,23 @@ export const verifyCode = createAsyncThunk(
     { rejectWithValue },
   ) => {
     try {
-      const data = await verifyRequest(
+      const data = await authenticatedRequest(
         `${baseUrl}/api/v1/auth/verify-phone`,
         { phone_number, verification_code },
-        true,
       );
 
-      localStorage.setItem("access_token", data.access_token);
-      localStorage.setItem("refresh_token", data.refresh_token);
+      storeAuthTokens(data.access_token, data.refresh_token, data.is_active);
 
-      return { token: data.access_token, user: data.user as UserState };
+      return { token: data.access_token };
     } catch (error) {
       return rejectWithValue(handleError(error));
     }
   },
 );
 
+/**
+ * Login user
+ */
 export const loginUser = createAsyncThunk(
   "auth/login",
   async (
@@ -122,30 +180,24 @@ export const loginUser = createAsyncThunk(
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identifier, password }),
+        credentials: "include",
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+      if (!res.ok) throw new Error(extractApiError(data));
 
-      localStorage.setItem("access_token", data.access_token);
-      localStorage.setItem("refresh_token", data.refresh_token);
-      localStorage.setItem("is_active", "true");
+      storeAuthTokens(data.access_token, data.refresh_token, data.is_active);
 
-      const jwt = JSON.parse(atob(data.access_token.split(".")[1]));
-      const accessMaxAge =
-        Math.max(jwt.exp * 1000 - Date.now(), 0) / 1000 || 60 * 60 * 24 * 7;
-
-      setCookie("access_token", data.access_token, accessMaxAge);
-      setCookie("refresh_token", data.refresh_token, accessMaxAge);
-      setCookie("is_active", "true", 60 * 60 * 24 * 7);
-
-      return { token: data.access_token, user: data.user as UserState };
+      return { token: data.access_token };
     } catch (error) {
       return rejectWithValue(handleError(error));
     }
   },
 );
 
+/**
+ * Register user
+ */
 export const registerUser = createAsyncThunk(
   "auth/register",
   async (
@@ -157,10 +209,11 @@ export const registerUser = createAsyncThunk(
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
+        credentials: "include",
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+      if (!res.ok) throw new Error(extractApiError(data));
 
       return data;
     } catch (error) {
@@ -169,6 +222,9 @@ export const registerUser = createAsyncThunk(
   },
 );
 
+/**
+ * Complete user registration
+ */
 export const completeRegistration = createAsyncThunk(
   "auth/completeRegistration",
   async (
@@ -176,10 +232,9 @@ export const completeRegistration = createAsyncThunk(
     { rejectWithValue },
   ) => {
     try {
-      await verifyRequest(
+      await authenticatedRequest(
         `${baseUrl}/api/v1/auth/complete-registration`,
         { username, interests },
-        true,
       );
 
       return { username, interests };
@@ -189,20 +244,33 @@ export const completeRegistration = createAsyncThunk(
   },
 );
 
+/**
+ * Request password reset
+ */
 export const forgotPassword = createAsyncThunk(
   "auth/forgotPassword",
   async (email: { email: string }, { rejectWithValue }) => {
     try {
-      return await verifyRequest(
-        `${baseUrl}/api/v1/auth/forgot-password`,
-        email,
-      );
+      const res = await fetch(`${baseUrl}/api/v1/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(email),
+        credentials: "include",
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(extractApiError(data));
+
+      return data;
     } catch (error) {
       return rejectWithValue(handleError(error));
     }
   },
 );
 
+/**
+ * Reset password with verification code
+ */
 export const verifyCodeResetPassword = createAsyncThunk(
   "auth/verifyCodeResetPassword",
   async (
@@ -214,11 +282,46 @@ export const verifyCodeResetPassword = createAsyncThunk(
     { rejectWithValue },
   ) => {
     try {
-      return await verifyRequest(`${baseUrl}/api/v1/auth/reset-password`, {
-        email,
-        verification_code,
-        new_password,
+      const res = await fetch(`${baseUrl}/api/v1/auth/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, verification_code, new_password }),
+        credentials: "include",
       });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(extractApiError(data));
+
+      return data;
+    } catch (error) {
+      return rejectWithValue(handleError(error));
+    }
+  },
+);
+
+/**
+ * Fetch current user profile
+ */
+export const fetchUserProfile = createAsyncThunk(
+  "auth/fetchUserProfile",
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem("access_token");
+      if (!token) throw new Error("No authentication token found");
+
+      const res = await fetch(`${baseUrl}/api/v1/users/me`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(extractApiError(data));
+
+      return { user: data };
     } catch (error) {
       return rejectWithValue(handleError(error));
     }
@@ -233,68 +336,67 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.isAuth = false;
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
+      clearAuthTokens();
+    },
+    clearError: (state) => {
+      state.error = null;
+    },
+    setToken: (state, action: PayloadAction<string>) => {
+      state.token = action.payload;
+      state.isAuth = true;
     },
   },
   extraReducers: (builder) => {
     builder
+      // Login user
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(
-        loginUser.fulfilled,
-        (state, action: PayloadAction<{ token: string; user: UserState }>) => {
-          state.loading = false;
-          state.token = action.payload.token;
-          state.user = action.payload.user;
-          state.isAuth = true;
-        },
-      )
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.token = action.payload.token;
+        state.isAuth = true;
+        state.error = null;
+      })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string | null;
+        state.error = action.payload as string;
       })
+
+      // Verify token
+      .addCase(verifyToken.fulfilled, (state, action) => {
+        state.loading = false;
+        state.token = action.payload.token;
+        state.isAuth = true;
+      })
+
+      // Verify phone number
+      .addCase(verifyPhone.fulfilled, (state) => {
+        state.loading = false;
+      })
+
+      // Verify code
+      .addCase(verifyCode.fulfilled, (state, action) => {
+        state.loading = false;
+        state.token = action.payload.token;
+      })
+
+      // Complete registration
+      .addCase(completeRegistration.fulfilled, (state) => {
+        state.loading = false;
+      })
+
+      // Fetch user profile
       .addCase(
-        verifyToken.fulfilled,
-        (state, action: PayloadAction<{ token: string; user: UserState }>) => {
+        fetchUserProfile.fulfilled,
+        (state, action: PayloadAction<{ user: UserState }>) => {
           state.loading = false;
-          state.token = action.payload.token;
           state.user = action.payload.user;
-          state.isAuth = true;
         },
       )
-      .addCase(
-        verifyPhone.fulfilled,
-        (state, action: PayloadAction<{ phone_number: string }>) => {
-          state.loading = false;
-          if (state.user) {
-            state.user.phone_number = action.payload.phone_number;
-          }
-        },
-      )
-      .addCase(
-        verifyCode.fulfilled,
-        (state, action: PayloadAction<{ token: string; user: UserState }>) => {
-          state.loading = false;
-          state.token = action.payload.token;
-          state.user = action.payload.user;
-        },
-      )
-      .addCase(
-        completeRegistration.fulfilled,
-        (
-          state,
-          action: PayloadAction<{ username: string; interests: string[] }>,
-        ) => {
-          state.loading = false;
-          if (state.user) {
-            state.user.profile.username = action.payload.username;
-            state.user.profile.interests = action.payload.interests;
-          }
-        },
-      )
+
+      // Generic pending handler
       .addMatcher(
         (action) =>
           action.type.startsWith("auth/") && action.type.endsWith("/pending"),
@@ -303,8 +405,10 @@ const authSlice = createSlice({
           state.error = null;
         },
       )
+
+      // Generic rejection handler
       .addMatcher(
-        (action): action is PayloadAction<string | null> =>
+        (action): action is PayloadAction<string> =>
           action.type.startsWith("auth/") && action.type.endsWith("/rejected"),
         (state, action) => {
           state.loading = false;
@@ -314,5 +418,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout } = authSlice.actions;
+export const { logout, clearError, setToken } = authSlice.actions;
 export default authSlice.reducer;

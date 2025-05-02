@@ -1,3 +1,9 @@
+export type ApiErrorShape = {
+  detail?: string;
+  message?: string;
+  error?: string;
+};
+
 export interface UserLocationState {
   city: string | null;
   coords: { lat: number; lng: number } | null;
