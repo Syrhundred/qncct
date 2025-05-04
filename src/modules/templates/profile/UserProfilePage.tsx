@@ -8,8 +8,11 @@ import Image from "next/image";
 import { BottomSheet } from "@/shared/ui/modal/BottomSheet";
 import { UserSubscriptionList } from "@/widgets/subscriptions/UserSubscriptionList";
 import { Skeleton } from "@mui/material";
-import React, { useRef, useState, useLayoutEffect } from "react";
+import React, { useRef, useState, useLayoutEffect, useEffect } from "react";
 import SmallButton from "@/modules/shared/ui/button/SmallButton";
+import { useAppSelector } from "@/shared/lib/storeHooks";
+
+const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 type Props = {
   isLoading: boolean;
@@ -32,18 +35,28 @@ type Props = {
 
 export const UserProfilePage = ({
   isLoading,
-  user,
+  user: initialUser,
   showFollowButton = false,
 }: Props) => {
+  const currentUserId = useAppSelector((state) => state.auth.user?.id);
+  const isOwnProfile = currentUserId === initialUser?.id;
+
+  const [user, setUser] = useState(initialUser);
+  const [loadingFollow, setLoadingFollow] = useState(false);
   const [activeTab, setActiveTab] = useState<"info" | "badges" | "rating">(
     "info",
   );
+
   const [underlineStyle, setUnderlineStyle] = useState({});
   const tabRefs = {
     info: useRef<HTMLButtonElement>(null),
     badges: useRef<HTMLButtonElement>(null),
     rating: useRef<HTMLButtonElement>(null),
   };
+
+  useEffect(() => {
+    setUser(initialUser);
+  }, [initialUser]);
 
   useLayoutEffect(() => {
     const ref = tabRefs[activeTab];
@@ -59,6 +72,19 @@ export const UserProfilePage = ({
     }
   }, [activeTab]);
 
+  useEffect(() => {
+    if (!isLoading && user && tabRefs["info"].current) {
+      const { offsetLeft, offsetWidth } = tabRefs["info"].current;
+      setUnderlineStyle({
+        left: offsetLeft,
+        width: offsetWidth,
+        height: 4,
+        backgroundColor: "#641BFE",
+        borderRadius: 2,
+      });
+    }
+  }, [isLoading, user]);
+
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false);
   const [sheetType, setSheetType] = useState<"followers" | "following">(
     "followers",
@@ -67,6 +93,46 @@ export const UserProfilePage = ({
   const openSheet = (type: "followers" | "following") => {
     setSheetType(type);
     setBottomSheetOpen(true);
+  };
+
+  const handleFollowToggle = async () => {
+    if (!user) return;
+
+    setLoadingFollow(true);
+
+    const isFollow = !(user.is_following || user.is_mutual);
+    const method = isFollow ? "POST" : "DELETE";
+    const url = `${baseUrl}/api/v1/subscriptions/${user.id}/${isFollow ? "follow" : "unfollow"}`;
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Failed to update subscription");
+
+      setUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              is_following: isFollow,
+              is_mutual: isFollow && prev.is_follower,
+              followers_count: prev.followers_count + (isFollow ? 1 : -1),
+              following_count: isOwnProfile
+                ? prev.following_count + (isFollow ? 1 : -1)
+                : prev.following_count,
+            }
+          : null,
+      );
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingFollow(false);
+    }
   };
 
   const renderTabContent = () => {
@@ -164,7 +230,7 @@ export const UserProfilePage = ({
                   </div>
                 </div>
 
-                {showFollowButton && (
+                {showFollowButton && !isOwnProfile && (
                   <SmallButton
                     buttonText={
                       user.is_mutual
@@ -176,9 +242,13 @@ export const UserProfilePage = ({
                             : "Follow"
                     }
                     size="w-[100px] h-[36px]"
-                    onClick={() => {
-                      console.log("TODO: Follow/unfollow logic");
-                    }}
+                    onClick={handleFollowToggle}
+                    state={loadingFollow}
+                    className={
+                      user.is_following || user.is_mutual
+                        ? "bg-gray-200 text-gray-700"
+                        : "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
+                    }
                   />
                 )}
 
@@ -215,7 +285,23 @@ export const UserProfilePage = ({
         onClose={() => setBottomSheetOpen(false)}
         title={sheetType === "followers" ? "Followers" : "Following"}
       >
-        <UserSubscriptionList type={sheetType} userId={user?.id} />
+        <UserSubscriptionList
+          type={sheetType}
+          userId={user?.id}
+          onChangeCounts={(diff) => {
+            setUser((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    followers_count:
+                      prev.followers_count + (diff.followers || 0),
+                    following_count:
+                      prev.following_count + (diff.following || 0),
+                  }
+                : null,
+            );
+          }}
+        />
       </BottomSheet>
     </div>
   );
