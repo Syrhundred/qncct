@@ -3,22 +3,23 @@
 import { motion } from "framer-motion";
 import { cn } from "@/modules/shared/utils/cn";
 
-const interestEmojis: Record<string, string> = {
-  music: "🎵",
-  sports: "⚽",
-  travel: "✈️",
-  cooking: "🍳",
-  films: "🎬",
-  technology: "💻",
-  art: "🎨",
-  reading: "📚",
-  photo: "📷",
-  gaming: "🎮",
+export const interestEmojis: Record<string, string> = {
+  Business: "💼",
+  Community: "🙌",
+  "Music & Entertainment": "🎼",
+  Theatre: "🎭",
+  "Food & drink": "🍿",
+  Sport: "⚽",
+  Fashion: "👠",
+  "Film & Media": "🎬",
+  "Home & Lifestyle": "🏡",
+  Design: "🎨",
+  Gaming: "🎮",
+  "Science & Tech": "🧪",
+  "Education & Workshops": "📚",
+  Holiday: "🏖️",
+  Travel: "✈️",
 };
-
-function capitalizeFirstLetter(str: string): string {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
 
 export default function Interest({
   title,
@@ -31,10 +32,9 @@ export default function Interest({
   active?: boolean;
   onClick?: () => void;
 }) {
-  const emoji = interestEmojis[title.toLowerCase()] || "❓";
-  const capitalizedTitle = capitalizeFirstLetter(title);
+  const emoji = interestEmojis[title] || "❓";
 
-  const baseClasses = `px-4 text-sm py-2 bg-white rounded-lg drop-shadow-md transition-all duration-100 flex justify-center items-center gap-2 cursor-pointer select-none`;
+  const baseClasses = `px-4 text-sm py-2 bg-white rounded-xl border text-gray-800 shadow-sm transition-all duration-100 flex justify-center items-center gap-2 cursor-pointer select-none`;
 
   return isButton ? (
     <motion.button
@@ -50,11 +50,11 @@ export default function Interest({
         damping: 20,
       }}
     >
-      <span>{emoji}</span> {capitalizedTitle}
+      <span>{emoji}</span> {title}
     </motion.button>
   ) : (
     <div className={baseClasses}>
-      <span>{emoji}</span> {capitalizedTitle}
+      <span>{emoji}</span> {title}
     </div>
   );
 }

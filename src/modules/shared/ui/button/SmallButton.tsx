@@ -1,10 +1,9 @@
-import React from "react";
-
 interface ButtonProps {
   buttonType?: "button" | "submit" | "reset";
   state?: boolean;
   buttonText: string;
   size: string;
+  className?: string;
   onClick?: () => void;
 }
 
@@ -13,6 +12,7 @@ const SmallButton: React.FC<ButtonProps> = ({
   state = false,
   buttonText,
   size = "",
+  className = "",
   onClick,
 }) => {
   return (
@@ -20,7 +20,9 @@ const SmallButton: React.FC<ButtonProps> = ({
       onClick={onClick}
       type={buttonType}
       disabled={state}
-      className={`bg-gradient rounded-lg text-white ${size} text-xs ${state ? "opacity-50 cursor-not-allowed" : ""}`}
+      className={`rounded-lg text-xs ${size} ${
+        state ? "opacity-50 cursor-not-allowed" : ""
+      } ${className}`}
     >
       {buttonText}
     </button>
