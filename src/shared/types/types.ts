@@ -74,4 +74,10 @@ export interface IEvent {
       is_mine: boolean;
     },
   ];
+  participants_count: number;
+  participants_preview: {
+    user_id: string;
+    username: string;
+    avatar_url: string;
+  };
 }

@@ -151,7 +151,6 @@ export const fetchEventById = createAsyncThunk<IEvent, string>(
         },
       });
       const data = await res.json();
-      console.log(data);
 
       return data as IEvent;
     } catch (error) {

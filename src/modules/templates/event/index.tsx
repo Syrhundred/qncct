@@ -116,6 +116,10 @@ export default function Event() {
             </span>
           </div>
 
+          <div>
+            <span>{event.participants_count}</span>
+          </div>
+
           <YandexMap containerSize="h-[250px]" currentEvent={coords} />
 
           <div className="w-full flex justify-between items-center">

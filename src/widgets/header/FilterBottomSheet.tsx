@@ -79,7 +79,7 @@ export default function FilterBottomSheet({
     if (selectedLocation) {
       params.append("lat", selectedLocation.coordinates[1].toString());
       params.append("lon", selectedLocation.coordinates[0].toString());
-      params.append("radius_km", "1");
+      params.append("radius_km", "5");
     }
 
     if (selectedInterests.length > 0) {
@@ -110,7 +110,7 @@ export default function FilterBottomSheet({
     if (selectedLocation) {
       fetchParams.lat = selectedLocation.coordinates[1];
       fetchParams.lon = selectedLocation.coordinates[0];
-      fetchParams.radius_km = 15;
+      fetchParams.radius_km = 5;
     }
 
     if (selectedInterests.length > 0) {
@@ -202,7 +202,10 @@ export default function FilterBottomSheet({
         />
 
         <div>
-          <h2 className="text-lg font-semibold">Location</h2>
+          <span className="flex items-center gap-1">
+            <h2 className="text-lg font-semibold">Location</h2>{" "}
+            <span className="text-xs">(radius - 5km)</span>
+          </span>
           <LocationAutocompleteYandex
             onSelect={(place) => setSelectedLocation(place)}
           />

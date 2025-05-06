@@ -1,4 +1,3 @@
-// Header.tsx
 "use client";
 
 import { Container } from "@/modules/shared/ui/core/Container";
@@ -11,9 +10,8 @@ import { useInitUserLocation } from "@/shared/hooks/useInitUserLocation";
 
 export default function Header() {
   const { isAuth } = useAppSelector((state) => state.auth);
-  const { city } = useAppSelector((state) => state.userLocation); // Получаем данные о городе из Redux
+  const { city } = useAppSelector((state) => state.userLocation);
 
-  // Инициализируем местоположение пользователя, если он авторизован
   useInitUserLocation(isAuth);
 
   return (
