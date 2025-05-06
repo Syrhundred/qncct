@@ -102,7 +102,7 @@ export default function CompleteRegistration() {
             </div>
 
             <Formik<{
-              interests: { id: string; name: string }[];
+              interests: { value: string; label: string }[];
             }>
               initialValues={{ interests: [] }}
               validationSchema={interestsSchema}
@@ -110,7 +110,7 @@ export default function CompleteRegistration() {
                 const result = await dispatch(
                   completeRegistration({
                     username,
-                    interests: values.interests.map((i) => i.name),
+                    interests: values.interests.map((i) => i.label),
                   }),
                 );
 
@@ -127,8 +127,8 @@ export default function CompleteRegistration() {
                   <div className="w-64">
                     <Select
                       options={categories.map((cat) => ({
-                        id: cat.id,
-                        name: cat.name,
+                        value: cat.id,
+                        label: cat.name,
                       }))}
                       isMulti
                       isSearchable={false} // ← ключевая строка
@@ -137,7 +137,7 @@ export default function CompleteRegistration() {
                       onChange={(selected) =>
                         setFieldValue(
                           "interests",
-                          selected as { id: string; name: string }[],
+                          selected as { value: string; label: string }[],
                         )
                       }
                       components={{
