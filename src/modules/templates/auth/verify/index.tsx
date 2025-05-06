@@ -163,9 +163,11 @@ export default function VerifyPhone() {
                 router.push("/complete-registration");
               } catch (err) {
                 setVerificationError(
-                  "Invalid verification code. Please try again." + err,
+                  "Invalid verification code. Please try again. " +
+                    (err instanceof Error ? err.message : String(err)),
                 );
               }
+
               setSubmitting(false);
             }}
           >

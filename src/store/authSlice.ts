@@ -81,18 +81,30 @@ export const verifyToken = createAsyncThunk(
         `${baseUrl}/api/v1/auth/verify-magic-link?token=${token}`,
         {
           method: "GET",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+          },
           credentials: "include",
         },
       );
 
       const data = await res.json();
-      if (!res.ok) throw new Error(extractApiError(data));
 
+      if (!res.ok || !data?.access_token) {
+        console.error("verifyToken error response:", res.status, data);
+        return rejectWithValue(extractApiError(data));
+      }
+
+      // сохранить токены
       storeAuthTokens(data.access_token, data.refresh_token, data.is_active);
 
-      return { token: data.access_token };
+      return {
+        token: data.access_token,
+        refreshToken: data.refresh_token,
+        isActive: data.is_active,
+      };
     } catch (error) {
+      console.error("verifyToken exception:", error);
       return rejectWithValue(handleError(error));
     }
   },
@@ -142,6 +154,7 @@ export const verifyPhone = createAsyncThunk(
 /**
  * Verify phone code
  */
+
 export const verifyCode = createAsyncThunk(
   "auth/verifyCode",
   async (
@@ -156,10 +169,7 @@ export const verifyCode = createAsyncThunk(
         `${baseUrl}/api/v1/auth/verify-phone`,
         { phone_number, verification_code },
       );
-
-      storeAuthTokens(data.access_token, data.refresh_token, data.is_active);
-
-      return { token: data.access_token };
+      return { message: data.message ?? "Phone verified" };
     } catch (error) {
       return rejectWithValue(handleError(error));
     }
@@ -377,9 +387,8 @@ const authSlice = createSlice({
       })
 
       // Verify code
-      .addCase(verifyCode.fulfilled, (state, action) => {
+      .addCase(verifyCode.fulfilled, (state) => {
         state.loading = false;
-        state.token = action.payload.token;
       })
 
       // Complete registration
