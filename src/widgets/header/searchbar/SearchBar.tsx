@@ -1,44 +1,36 @@
 "use client";
 
 import { Search, SlidersHorizontal } from "lucide-react";
-import { useState, useEffect } from "react";
-import FilterBottomSheet from "@/widgets/header/FilterBottomSheet";
+import { useState } from "react";
 
-export default function SearchBar({ isMainPage }: { isMainPage: boolean }) {
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const filterId = "search-filter";
+export default function SearchBar({
+  isMainPage,
+  onOpenFilter,
+  onSearch,
+}: {
+  isMainPage: boolean;
+  onOpenFilter?: () => void;
+  onSearch?: (query: string) => void;
+}) {
+  const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    // Set up event listener for the custom close event
-    const handleCloseEvent = (e: CustomEvent) => {
-      if (e.detail.id === filterId) {
-        setIsFilterOpen(false);
-      }
-    };
-
-    // Add event listener
-    document.addEventListener(
-      "closeBottomSheet",
-      handleCloseEvent as EventListener,
-    );
-
-    // Clean up event listener on component unmount
-    return () => {
-      document.removeEventListener(
-        "closeBottomSheet",
-        handleCloseEvent as EventListener,
-      );
-    };
-  }, [filterId]);
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && search.trim()) {
+      onSearch?.(search.trim());
+    }
+  };
 
   return (
     <div className="relative flex items-center">
       <div className="w-full">
         <input
-          className="w-full pl-12 p-3 rounded-lg focus:outline-none placeholder-lightgray placeholder-opacity-20"
+          className="w-full px-12 p-3 rounded-lg border focus:outline-none placeholder-lightgray placeholder-opacity-20"
           name="search"
           type="text"
           placeholder="Search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={handleKeyDown}
         />
       </div>
       <div className="absolute left-3 flex items-center">
@@ -47,14 +39,12 @@ export default function SearchBar({ isMainPage }: { isMainPage: boolean }) {
       {!isMainPage && (
         <button
           type="button"
-          onClick={() => setIsFilterOpen(true)}
+          onClick={onOpenFilter}
           className="absolute right-3 flex items-center"
         >
           <SlidersHorizontal />
         </button>
       )}
-
-      <FilterBottomSheet open={isFilterOpen} onCloseId={filterId} />
     </div>
   );
 }

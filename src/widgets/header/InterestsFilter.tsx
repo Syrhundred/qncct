@@ -1,16 +1,8 @@
 import Interest from "@/shared/ui/interest/Interest";
-
-const interestsList = [
-  "music",
-  "sports",
-  "travel",
-  "cooking",
-  "films",
-  "art",
-  "reading",
-  "photo",
-  "gaming",
-];
+import { useAppSelector } from "@/shared/hooks/useAppSelector";
+import { useEffect } from "react";
+import { useAppDispatch } from "@/shared/lib/storeHooks";
+import { fetchCategories } from "@/store/categorySlice";
 
 export default function InterestsFilter({
   selectedInterests,
@@ -19,6 +11,13 @@ export default function InterestsFilter({
   selectedInterests: string[];
   setSelectedInterests: (value: string[]) => void;
 }) {
+  const dispatch = useAppDispatch();
+  useEffect(() => {
+    dispatch(fetchCategories());
+  }, [dispatch]);
+
+  const { categories } = useAppSelector((state) => state.category);
+
   const toggleInterest = (interest: string) => {
     if (selectedInterests.includes(interest)) {
       setSelectedInterests(selectedInterests.filter((i) => i !== interest));
@@ -28,14 +27,14 @@ export default function InterestsFilter({
   };
 
   return (
-    <div className="mt-2 h-9 flex items-center gap-2 overflow-scroll no-scrollbar">
-      {interestsList.map((interest) => (
+    <div className="mt-2 h-11 flex items-center gap-2 overflow-scroll no-scrollbar">
+      {categories.map((category) => (
         <Interest
-          key={interest}
-          title={interest}
-          active={selectedInterests?.includes(interest)}
+          key={category.id}
+          title={category.name}
+          active={selectedInterests?.includes(category.name)}
           isButton={true}
-          onClick={() => toggleInterest(interest)}
+          onClick={() => toggleInterest(category.name)}
         />
       ))}
     </div>
