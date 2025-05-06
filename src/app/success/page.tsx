@@ -21,7 +21,6 @@ function AuthHandler() {
 
     if (!accessToken || !refreshToken || isActiveParam === null) return;
 
-    // Decode JWT and calculate token expiry
     let jwt;
     try {
       jwt = JSON.parse(atob(accessToken.split(".")[1]));
@@ -40,15 +39,12 @@ function AuthHandler() {
       localStorage.setItem("is_active", JSON.stringify(isActive));
     }
 
-    // 2. Cookies
     setCookie("access_token", accessToken, accessMaxAge);
     setCookie("refresh_token", refreshToken, accessMaxAge);
-    setCookie("is_active", String(isActive), 60 * 60 * 24 * 7); // 1 week
+    setCookie("is_active", String(isActive), 60 * 60 * 24 * 7);
 
-    // 3. Clean the URL
     window.history.replaceState({}, document.title, "/success");
 
-    // 4. Redirect based on isActive
     if (isActive) {
       router.replace("/");
     } else {
@@ -59,7 +55,6 @@ function AuthHandler() {
   return <div>Processing authentication...</div>;
 }
 
-// Main component that wraps the search params component with Suspense
 export default function SuccessPage() {
   return (
     <Suspense fallback={<div>Authorising...</div>}>
