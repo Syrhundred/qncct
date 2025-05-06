@@ -37,6 +37,7 @@
     "sonner": "^2.0.3",
     "styled-components": "^6.1.16",
     "tailwind-merge": "^3.0.2",
+    "uuid": "^11.1.0",
     "yup": "^1.6.1"
   },
   "devDependencies": {
@@ -47,6 +48,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/react-map-gl": "^6.1.7",
+    "@types/uuid": "^10.0.0",
     "dayjs": "^1.11.13",
     "eslint": "^8",
     "eslint-config-next": "14.2.24",

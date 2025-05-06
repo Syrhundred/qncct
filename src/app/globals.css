@@ -48,4 +48,6 @@ h3 {
     scrollbar-width: none;  /* Firefox */
 }
 
-
+.safe-bottom {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 80px); /* 80px ≈ navbar */
+}

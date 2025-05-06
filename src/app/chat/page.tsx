@@ -1,11 +1,10 @@
-// src/app/chat/page.tsx
-import ChatRoomsList from "@/modules/chat/ui/ChatRoomsList";
+import LayoutWithNavigation from "../LayoutWithNavigation";
+import ChatRoomsPageInner from "@/modules/chat/ui/ChatRoomsPageInner";
 
 export default function ChatRoomsPage() {
   return (
-    <main className="h-full bg-white">
-      <h1 className="px-4 pt-6 text-2xl font-bold">Chats</h1>
-      <ChatRoomsList />
-    </main>
+    <LayoutWithNavigation>
+      <ChatRoomsPageInner />
+    </LayoutWithNavigation>
   );
 }

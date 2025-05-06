@@ -1,19 +1,28 @@
-// src/modules/chat/api/types.ts
-export interface Room {
-  id: string;
+export interface RoomDTO {
+  room_id: string;
   title: string;
-  avatar_url: string;
+  banner: string;
   unread: number;
-  last_message_preview: string;
-  updated_at: string;
+  last_msg_preview?: {
+    content?: string;
+    created_at?: string;
+  } | null;
 }
 
-export interface Message {
+export interface MessageDTO {
   id: string;
-  author_id: string;
-  author_avatar: string;
+  room_id: string;
+  sender: {
+    id: string;
+    username: string;
+    avatar_url: string;
+  };
   content: string;
-  created_at: string;
-  reply_to_id: string | null;
-  type: "text" | "voice";
+  created_at: string; // ISO
+  is_mine: boolean;
+  reply_to: {
+    id: string;
+    sender: { id: string; username: string; avatar_url: string };
+    snippet: string;
+  } | null;
 }

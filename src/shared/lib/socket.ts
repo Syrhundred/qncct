@@ -1,31 +1,32 @@
-// src/modules/shared/lib/socket.ts
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL!;
+import { ReliableSocket } from "./reliableSocket";
+import { store } from "@/store";
 
-export class Socket {
-  private socket?: WebSocket;
-  private reconnectTimer?: NodeJS.Timeout;
-  public connected = false; // <—
+export const socket = new ReliableSocket(process.env.NEXT_PUBLIC_WS_URL!);
 
-  constructor(private readonly url: string) {}
+/* wake-up при возврате во вкладку или восстановлении сети */
+if (typeof window !== "undefined") {
+  const wake = () => {
+    /* ① восстановить WebSocket */
+    const token = localStorage.getItem("access_token");
+    if (token && !socket.connected) socket.connect(token);
 
-  connect(token: string, onMsg: (evt: MessageEvent) => void) {
-    if (this.socket?.readyState === WebSocket.OPEN) return;
-
-    this.socket = new WebSocket(`${this.url}?token=${token}`);
-    this.socket.onmessage = onMsg;
-    this.socket.onopen = () => (this.connected = true);
-    this.socket.onclose = () => {
-      this.connected = false;
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = setTimeout(() => this.connect(token, onMsg), 3_000);
-    };
-  }
-
-  send(payload: unknown) {
-    if (this.socket?.readyState === WebSocket.OPEN) {
-      this.socket.send(JSON.stringify(payload));
+    /* ② если на /chat/[roomId] – forceRefetch истории */
+    const m = window.location.pathname.match(/^\/chat\/([^/]+)/);
+    if (m) {
+      /*  ленивый импорт, чтобы избежать цикла */
+      import("@/modules/chat/api/chatApiSlice").then(({ chatApi }) => {
+        store.dispatch(
+          chatApi.endpoints.getHistory.initiate(m[1], {
+            forceRefetch: true,
+            subscribe: false, // нет подписки — одноразовый запрос
+          }),
+        );
+      });
     }
-  }
-}
+  };
 
-export const socket = new Socket(WS_URL);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") wake();
+  });
+  window.addEventListener("online", wake);
+}

@@ -1,13 +1,5 @@
-// src/app/chat/page.tsx
-import ChatRoomsList from "@/modules/chat/ui/ChatRoomsList";
+import ChatView from "@/modules/chat/ui/ChatView";
 
-export default function ChatRoomsPage() {
-  return (
-    <main className="h-full bg-white pb-28">
-      {" "}
-      {/* pb-28 ≈ высота navbar */}
-      <h1 className="px-4 pt-6 text-2xl font-bold">Chats</h1>
-      <ChatRoomsList />
-    </main>
-  );
+export default function ChatRoomPage() {
+  return <ChatView />;
 }
