@@ -5,9 +5,10 @@ import { useSelector } from "react-redux";
 import { createSelector } from "@reduxjs/toolkit";
 import { RootState } from "@/store";
 
+import { useGetRoomsQuery } from "../api/chatApiSlice";
 import ChatRoomItem from "./ChatRoomItem";
 
-/* ---------- memo-selector: rooms[] ---------- */
+/* ---------- memo-selector: массив комнат ---------- */
 const selectRoomsArr = createSelector(
   (s: RootState) => s.chat.rooms,
   (rooms) =>
@@ -19,9 +20,13 @@ const selectRoomsArr = createSelector(
 );
 
 export default function ChatRoomsList() {
-  const rooms = useSelector(selectRoomsArr); // ← мемоизировано
+  /** ① Триггерим GET /chat/rooms один раз, если нет кэша */
+  useGetRoomsQuery(undefined, { skip: false });
 
-  if (!rooms.length) return <p className="p-4">No chats yet…</p>;
+  /** ② Читаем данные из стора (мемоизировано) */
+  const rooms = useSelector(selectRoomsArr);
+
+  if (!rooms.length) return <p className="p-6">No chats yet…</p>;
 
   return (
     <ul className="divide-y">
