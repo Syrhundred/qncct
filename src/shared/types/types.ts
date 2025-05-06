@@ -13,14 +13,20 @@ export interface UserLocationState {
 export interface AuthState {
   user: UserState | null;
   token: string | null;
-  loading: boolean;
   error: string | null;
   isAuth: boolean;
+  loadingLogin: boolean;
+  loadingRegister: boolean;
+  loadingVerifyToken: boolean;
+  loadingVerifyPhone: boolean;
+  loadingVerifyCode: boolean;
+  loadingCompleteRegistration: boolean;
+  loadingFetchUserProfile: boolean;
 }
 
 export interface UserProfile {
   username: string;
-  interests?: string[];
+  interests: string[];
   avatar_url: string;
   about_me: string;
 }
@@ -68,4 +74,10 @@ export interface IEvent {
       is_mine: boolean;
     },
   ];
+  participants_count: number;
+  participants_preview: {
+    user_id: string;
+    username: string;
+    avatar_url: string;
+  };
 }

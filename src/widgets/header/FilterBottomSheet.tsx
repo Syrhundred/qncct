@@ -20,6 +20,7 @@ type YandexPlace = {
 type FilterBottomSheetProps = {
   open: boolean;
   onCloseId: string;
+  initialInterests: string[];
 };
 
 interface FetchEventsParams {
@@ -35,8 +36,10 @@ interface FetchEventsParams {
 export default function FilterBottomSheet({
   open,
   onCloseId,
+  initialInterests,
 }: FilterBottomSheetProps) {
-  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [selectedInterests, setSelectedInterests] =
+    useState<string[]>(initialInterests);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [dateFilter, setDateFilter] = useState<
     "today" | "tomorrow" | "this_week" | null
@@ -52,7 +55,16 @@ export default function FilterBottomSheet({
       document.dispatchEvent(
         new CustomEvent("closeBottomSheet", { detail: { id: onCloseId } }),
       );
+      // Dispatch an event when closing for parent components to handle
+      document.dispatchEvent(new CustomEvent("filterBottomSheetClosed"));
     });
+  };
+
+  const toLocalISODate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, "0");
+    const day = `${date.getDate()}`.padStart(2, "0");
+    return `${year}-${month}-${day}`;
   };
 
   const buildQueryParams = () => {
@@ -61,17 +73,19 @@ export default function FilterBottomSheet({
     if (dateFilter) {
       params.append("date_filter", dateFilter);
     } else if (selectedDate) {
-      params.append("custom_date", selectedDate.toISOString());
+      params.append("custom_date", toLocalISODate(selectedDate));
     }
 
     if (selectedLocation) {
       params.append("lat", selectedLocation.coordinates[1].toString());
       params.append("lon", selectedLocation.coordinates[0].toString());
-      params.append("place", selectedLocation.fullAddress);
+      params.append("radius_km", "5");
     }
 
     if (selectedInterests.length > 0) {
-      params.append("interests", selectedInterests.join(","));
+      selectedInterests.forEach((interest) => {
+        params.append("interests", interest);
+      });
     }
 
     return params.toString();
@@ -85,11 +99,18 @@ export default function FilterBottomSheet({
 
     const fetchParams: FetchEventsParams = {};
 
-    if (selectedDate) fetchParams.custom_date = selectedDate.toISOString();
+    if (dateFilter) {
+      fetchParams.date_filter = dateFilter;
+    } else if (selectedDate) {
+      fetchParams.custom_date = toLocalISODate(selectedDate);
+    }
+
+    if (selectedDate) fetchParams.custom_date = toLocalISODate(selectedDate);
 
     if (selectedLocation) {
       fetchParams.lat = selectedLocation.coordinates[1];
       fetchParams.lon = selectedLocation.coordinates[0];
+      fetchParams.radius_km = 5;
     }
 
     if (selectedInterests.length > 0) {
@@ -97,6 +118,14 @@ export default function FilterBottomSheet({
     }
 
     dispatch(fetchEvents(fetchParams));
+
+    // Dispatch an event with the updated interests for parent components to use
+    document.dispatchEvent(
+      new CustomEvent("filterInterestsChanged", {
+        detail: { interests: selectedInterests },
+      }),
+    );
+
     handleClose();
   };
 
@@ -173,7 +202,10 @@ export default function FilterBottomSheet({
         />
 
         <div>
-          <h2 className="text-lg font-semibold">Location</h2>
+          <span className="flex items-center gap-1">
+            <h2 className="text-lg font-semibold">Location</h2>{" "}
+            <span className="text-xs">(radius - 5km)</span>
+          </span>
           <LocationAutocompleteYandex
             onSelect={(place) => setSelectedLocation(place)}
           />

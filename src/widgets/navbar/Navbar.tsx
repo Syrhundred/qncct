@@ -42,7 +42,7 @@ const Navbar = () => {
   return (
     <nav className="fixed bottom-0 w-full z-50">
       <div className="w-full h-28">
-        <div className="bg-white h-20 flex items-center w-full fixed bottom-0">
+        <div className="bg-white border-t h-20 flex items-center w-full fixed bottom-0">
           <ul className="flex items-center justify-evenly w-full">
             {navbarLinks.map(({ id, altIcon, icon, text, link, isCenter }) => (
               <li key={id} className={clsx(isCenter && "pb-16")}>

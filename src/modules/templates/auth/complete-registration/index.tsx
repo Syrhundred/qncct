@@ -36,7 +36,9 @@ const interestsSchema = Yup.object().shape({
 
 export default function CompleteRegistration() {
   const dispatch = useDispatch<AppDispatch>();
-  const { loading, error } = useAppSelector((state) => state.auth);
+  const { loadingCompleteRegistration, error } = useAppSelector(
+    (state) => state.auth,
+  );
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [isUsernameCreated, setIsUsernameCreated] = useState<boolean | null>(
@@ -108,7 +110,7 @@ export default function CompleteRegistration() {
                 const result = await dispatch(
                   completeRegistration({
                     username,
-                    interests: values.interests.map((i) => i.value),
+                    interests: values.interests.map((i) => i.label),
                   }),
                 );
 
@@ -154,9 +156,11 @@ export default function CompleteRegistration() {
 
                   <Button
                     buttonType="submit"
-                    state={isSubmitting || loading}
+                    state={isSubmitting || loadingCompleteRegistration}
                     buttonText={
-                      loading ? "Processing..." : "Complete Registration"
+                      loadingCompleteRegistration
+                        ? "Processing..."
+                        : "Complete Registration"
                     }
                   />
 

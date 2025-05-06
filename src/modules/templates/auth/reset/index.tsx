@@ -5,10 +5,10 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { Container } from "@/modules/shared/ui/core/Container";
 import Button from "@/modules/shared/ui/button/Button";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "@/store";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/store";
 import { forgotPassword, verifyCodeResetPassword } from "@/store/authSlice";
-import { useRouter } from "next/navigation"; // ✅ Исправлено
+import { useRouter } from "next/navigation";
 
 const validationSchema = Yup.object().shape({
   email: Yup.string()
@@ -34,14 +34,13 @@ const codeSchema = Yup.object().shape({
 
 export default function ResetPassword() {
   const dispatch = useDispatch<AppDispatch>();
-  const router = useRouter(); // ✅ Используем правильный `useRouter`
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isCodeSent, setIsCodeSent] = useState(false);
-  const [isCodeVerified, setIsCodeVerified] = useState(false); // ✅ Новый стейт
+  const [isCodeVerified, setIsCodeVerified] = useState(false);
   const [email, setEmail] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const { loading } = useSelector((state: RootState) => state.auth);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-white">
@@ -63,7 +62,6 @@ export default function ResetPassword() {
                 : "Enter the 6-digit verification code sent to your email/phone."}
           </span>
 
-          {/* ✅ Ввод email/телефона */}
           {!isCodeSent && (
             <Formik
               initialValues={{ email }}
@@ -73,11 +71,11 @@ export default function ResetPassword() {
 
                 const result = await dispatch(
                   forgotPassword({ email: values.email }),
-                ); // ✅ Ожидаем результат
+                );
 
                 if (forgotPassword.fulfilled.match(result)) {
                   setEmail(values.email);
-                  setIsCodeSent(true); // ✅ Переход на ввод кода
+                  setIsCodeSent(true);
                 } else {
                   setError("Failed to send verification code.");
                 }
@@ -110,7 +108,6 @@ export default function ResetPassword() {
             </Formik>
           )}
 
-          {/* ✅ Ввод 6-значного кода */}
           {isCodeSent && !isCodeVerified && (
             <Formik
               key="code-form"
@@ -162,8 +159,8 @@ export default function ResetPassword() {
 
                   <Button
                     buttonType="submit"
-                    state={isSubmitting || loading}
-                    buttonText={loading ? "Verifying..." : "Verify Code"}
+                    state={isSubmitting}
+                    buttonText={isSubmitting ? "Verifying..." : "Verify Code"}
                   />
                 </Form>
               )}
@@ -242,8 +239,8 @@ export default function ResetPassword() {
 
                   <Button
                     buttonType="submit"
-                    state={isSubmitting || loading}
-                    buttonText={loading ? "Registering..." : "Register"}
+                    state={isSubmitting}
+                    buttonText={isSubmitting ? "Registering..." : "Register"}
                   />
 
                   {error && <p className="text-red-500 text-sm">{error}</p>}

@@ -4,21 +4,20 @@ import { motion } from "framer-motion";
 import { cn } from "@/modules/shared/utils/cn";
 
 export const interestEmojis: Record<string, string> = {
-  Business: "💼",
-  Community: "🙌",
-  "Music & Entertainment": "🎼",
-  Theatre: "🎭",
-  "Food & drink": "🍿",
-  Sport: "⚽",
-  Fashion: "👠",
-  "Film & Media": "🎬",
-  "Home & Lifestyle": "🏡",
-  Design: "🎨",
+  Music: "🎵",
+  Sports: "🏀",
+  Travel: "🌍",
+  Cooking: "🍳",
+  Films: "🎬",
+  Art: "🎨",
+  Reading: "📚",
+  Photo: "📸",
   Gaming: "🎮",
-  "Science & Tech": "🧪",
-  "Education & Workshops": "📚",
-  Holiday: "🏖️",
-  Travel: "✈️",
+  Tech: "💻",
+  Nature: "🌿",
+  Fashion: "👗",
+  Health: "💪",
+  Business: "💼",
 };
 
 export default function Interest({

@@ -9,7 +9,7 @@ import Image from "next/image";
 
 export default function EventCard({ event }: { event: IEvent }) {
   const formattedDate = dayjs(event.date).format("D MMMM YYYY");
-  const formattedAddress = event.address.substring(
+  const formattedAddress = event?.address?.substring(
     0,
     event.address.indexOf(", К"),
   );

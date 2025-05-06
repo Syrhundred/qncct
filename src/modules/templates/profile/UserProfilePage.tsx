@@ -90,6 +90,20 @@ export const UserProfilePage = ({
     "followers",
   );
 
+  // Set up the event listener for bottom sheet actions
+  useEffect(() => {
+    const handleBottomSheetClose = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail.action === "close-subscriptions") {
+        setBottomSheetOpen(false);
+      }
+    };
+
+    window.addEventListener("bottomsheet:close", handleBottomSheetClose);
+    return () =>
+      window.removeEventListener("bottomsheet:close", handleBottomSheetClose);
+  }, []);
+
   const openSheet = (type: "followers" | "following") => {
     setSheetType(type);
     setBottomSheetOpen(true);
@@ -282,8 +296,8 @@ export const UserProfilePage = ({
 
       <BottomSheet
         isOpen={bottomSheetOpen}
-        onClose={() => setBottomSheetOpen(false)}
-        title={sheetType === "followers" ? "Followers" : "Following"}
+        onCloseAction="close-subscriptions"
+        title={`${sheetType === "followers" ? "Followers" : "Following"}`}
       >
         <UserSubscriptionList
           type={sheetType}

@@ -27,7 +27,9 @@ const codeSchema = Yup.object().shape({
 
 export default function VerifyPhone() {
   const dispatch = useDispatch<AppDispatch>();
-  const { loading, error } = useSelector((state: RootState) => state.auth);
+  const { loadingVerifyPhone, error } = useSelector(
+    (state: RootState) => state.auth,
+  );
   const router = useRouter();
   const searchParams = useSearchParams();
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -132,8 +134,8 @@ export default function VerifyPhone() {
 
                 <Button
                   buttonType="submit"
-                  state={isSubmitting || loading}
-                  buttonText={loading ? "Sending..." : "Send Code"}
+                  state={isSubmitting || loadingVerifyPhone}
+                  buttonText={loadingVerifyPhone ? "Sending..." : "Send Code"}
                 />
 
                 {(error || verificationError) && (
@@ -217,8 +219,10 @@ export default function VerifyPhone() {
 
                 <Button
                   buttonType="submit"
-                  state={isSubmitting || loading}
-                  buttonText={loading ? "Verifying..." : "Verify Code"}
+                  state={isSubmitting || loadingVerifyPhone}
+                  buttonText={
+                    loadingVerifyPhone ? "Verifying..." : "Verify Code"
+                  }
                 />
 
                 {(error || verificationError) && (
