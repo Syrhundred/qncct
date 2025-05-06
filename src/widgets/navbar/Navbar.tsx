@@ -28,7 +28,7 @@ const Navbar = () => {
       altIcon: "altMessages",
       icon: "messages-3",
       text: "Chats",
-      link: "/chats",
+      link: "/chat",
     },
     {
       id: 4,
