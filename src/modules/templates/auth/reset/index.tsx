@@ -41,7 +41,6 @@ export default function ResetPassword() {
   const [email, setEmail] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const { loading } = useSelector((state: RootState) => state.auth);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-white">
@@ -162,8 +161,8 @@ export default function ResetPassword() {
 
                   <Button
                     buttonType="submit"
-                    state={isSubmitting || loading}
-                    buttonText={loading ? "Verifying..." : "Verify Code"}
+                    state={isSubmitting}
+                    buttonText={isSubmitting ? "Verifying..." : "Verify Code"}
                   />
                 </Form>
               )}
@@ -242,8 +241,8 @@ export default function ResetPassword() {
 
                   <Button
                     buttonType="submit"
-                    state={isSubmitting || loading}
-                    buttonText={loading ? "Registering..." : "Register"}
+                    state={isSubmitting}
+                    buttonText={isSubmitting ? "Registering..." : "Register"}
                   />
 
                   {error && <p className="text-red-500 text-sm">{error}</p>}

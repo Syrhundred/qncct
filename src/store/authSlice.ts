@@ -4,14 +4,19 @@ import { setCookie } from "@/shared/lib/cookies";
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-// Initial auth state
 const initialState: AuthState = {
   user: null,
   token:
     typeof window !== "undefined" ? localStorage.getItem("access_token") : null,
-  loading: false,
   error: null,
   isAuth: false,
+  loadingLogin: false,
+  loadingRegister: false,
+  loadingVerifyToken: false,
+  loadingVerifyPhone: false,
+  loadingVerifyCode: false,
+  loadingCompleteRegistration: false,
+  loadingFetchUserProfile: false,
 };
 
 /**
@@ -358,72 +363,105 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Login user
+      // 🔐 Login user
       .addCase(loginUser.pending, (state) => {
-        state.loading = true;
+        state.loadingLogin = true;
         state.error = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
-        state.loading = false;
+        state.loadingLogin = false;
         state.token = action.payload.token;
         state.isAuth = true;
         state.error = null;
       })
       .addCase(loginUser.rejected, (state, action) => {
-        state.loading = false;
+        state.loadingLogin = false;
         state.error = action.payload as string;
       })
 
-      // Verify token
+      // 🔑 Register user
+      .addCase(registerUser.pending, (state) => {
+        state.loadingRegister = true;
+        state.error = null;
+      })
+      .addCase(registerUser.fulfilled, (state) => {
+        state.loadingRegister = false;
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.loadingRegister = false;
+        state.error = action.payload as string;
+      })
+
+      // 🔎 Verify token (magic link)
+      .addCase(verifyToken.pending, (state) => {
+        state.loadingVerifyToken = true;
+        state.error = null;
+      })
       .addCase(verifyToken.fulfilled, (state, action) => {
-        state.loading = false;
+        state.loadingVerifyToken = false;
         state.token = action.payload.token;
         state.isAuth = true;
       })
+      .addCase(verifyToken.rejected, (state, action) => {
+        state.loadingVerifyToken = false;
+        state.error = action.payload as string;
+      })
 
-      // Verify phone number
+      // 📞 Request phone verification
+      .addCase(verifyPhone.pending, (state) => {
+        state.loadingVerifyPhone = true;
+        state.error = null;
+      })
       .addCase(verifyPhone.fulfilled, (state) => {
-        state.loading = false;
+        state.loadingVerifyPhone = false;
+      })
+      .addCase(verifyPhone.rejected, (state, action) => {
+        state.loadingVerifyPhone = false;
+        state.error = action.payload as string;
       })
 
-      // Verify code
+      // 🔢 Verify phone code
+      .addCase(verifyCode.pending, (state) => {
+        state.loadingVerifyCode = true;
+        state.error = null;
+      })
       .addCase(verifyCode.fulfilled, (state) => {
-        state.loading = false;
+        state.loadingVerifyCode = false;
+      })
+      .addCase(verifyCode.rejected, (state, action) => {
+        state.loadingVerifyCode = false;
+        state.error = action.payload as string;
       })
 
-      // Complete registration
+      // ✅ Complete registration
+      .addCase(completeRegistration.pending, (state) => {
+        state.loadingCompleteRegistration = true;
+        state.error = null;
+      })
       .addCase(completeRegistration.fulfilled, (state) => {
-        state.loading = false;
+        state.loadingCompleteRegistration = false;
+      })
+      .addCase(completeRegistration.rejected, (state, action) => {
+        state.loadingCompleteRegistration = false;
+        state.error = action.payload as string;
       })
 
-      // Fetch user profile
+      // 👤 Fetch current user
+      .addCase(fetchUserProfile.pending, (state) => {
+        state.loadingFetchUserProfile = true;
+        state.error = null;
+      })
       .addCase(
         fetchUserProfile.fulfilled,
         (state, action: PayloadAction<{ user: UserState }>) => {
-          state.loading = false;
+          state.loadingFetchUserProfile = false;
           state.user = action.payload.user;
         },
       )
-
-      // Generic pending handler
-      .addMatcher(
-        (action) =>
-          action.type.startsWith("auth/") && action.type.endsWith("/pending"),
-        (state) => {
-          state.loading = true;
-          state.error = null;
-        },
-      )
-
-      // Generic rejection handler
-      .addMatcher(
-        (action): action is PayloadAction<string> =>
-          action.type.startsWith("auth/") && action.type.endsWith("/rejected"),
-        (state, action) => {
-          state.loading = false;
-          state.error = action.payload;
-        },
-      );
+      .addCase(fetchUserProfile.rejected, (state, action) => {
+        state.loadingFetchUserProfile = false;
+        state.error = action.payload as string;
+      });
   },
 });
 

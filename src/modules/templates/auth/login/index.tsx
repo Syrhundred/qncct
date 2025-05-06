@@ -36,7 +36,7 @@ export default function Login() {
   const router = useRouter();
 
   // Get auth state from Redux
-  const { loading, error, isAuth } = useAppSelector((state) => state.auth);
+  const { loadingLogin, error, isAuth } = useAppSelector((state) => state.auth);
 
   // Local state
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -155,8 +155,8 @@ export default function Login() {
 
                 <Button
                   buttonType="submit"
-                  state={isSubmitting || loading}
-                  buttonText={loading ? "Logging in..." : "Sign In"}
+                  state={isSubmitting || loadingLogin}
+                  buttonText={loadingLogin ? "Logging in..." : "Sign In"}
                 />
 
                 {error && <p className="text-red-500 text-sm">{error}</p>}

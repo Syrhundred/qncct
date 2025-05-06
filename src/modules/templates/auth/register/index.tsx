@@ -28,9 +28,10 @@ const validationSchema = Yup.object({
 
 export default function Register() {
   const dispatch = useDispatch<AppDispatch>();
-  const { loading, error } = useSelector((state: RootState) => state.auth);
+  const { loadingRegister, error } = useSelector(
+    (state: RootState) => state.auth,
+  );
   const router = useRouter();
-  // const [agreeToTerms, setAgreeToTerms] = useState(false);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-white">
@@ -117,8 +118,8 @@ export default function Register() {
               {/* Register Button */}
               <Button
                 buttonType="submit"
-                state={isSubmitting || loading}
-                buttonText={loading ? "Registering..." : "Register"}
+                state={isSubmitting || loadingRegister}
+                buttonText={loadingRegister ? "Registering..." : "Register"}
               />
               <div className="flex gap-1 justify-center">
                 <span className="text-xs text-lightgray">

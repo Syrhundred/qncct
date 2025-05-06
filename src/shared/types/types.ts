@@ -13,9 +13,15 @@ export interface UserLocationState {
 export interface AuthState {
   user: UserState | null;
   token: string | null;
-  loading: boolean;
   error: string | null;
   isAuth: boolean;
+  loadingLogin: boolean;
+  loadingRegister: boolean;
+  loadingVerifyToken: boolean;
+  loadingVerifyPhone: boolean;
+  loadingVerifyCode: boolean;
+  loadingCompleteRegistration: boolean;
+  loadingFetchUserProfile: boolean;
 }
 
 export interface UserProfile {
