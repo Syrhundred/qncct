@@ -7,15 +7,26 @@ import {
   typing as typingAction,
 } from "./chatSlice";
 
+interface ChatSocket {
+  /** Подключает веб-сокет с JWT */
+  connect(token: string): void;
+  /** Унифицированный метод подписки на сообщения */
+  addListener(cb: (e: MessageEvent<string>) => void): void;
+  /** Флаг одноразовой инициализации; выставляем только на клиенте */
+  _initialized?: boolean;
+}
+
 export const chatWsMiddleware: Middleware = (store) => (next) => (action) => {
   if (typeof window === "undefined") return next(action);
 
+  const chatSocket = socket as ChatSocket;
+
   /* однократная инициализация */
   const token = localStorage.getItem("access_token");
-  if (token && !(socket as any)._initialized) {
-    socket.connect(token);
+  if (token && !chatSocket._initialized) {
+    chatSocket.connect(token);
 
-    socket.addListener((e) => {
+    chatSocket.addListener((e) => {
       const d = JSON.parse(e.data);
 
       switch (d.type) {
@@ -23,7 +34,7 @@ export const chatWsMiddleware: Middleware = (store) => (next) => (action) => {
           store.dispatch(init(d.rooms));
           break;
 
-        case "message": {
+        case "message":
           console.debug("[mw] message →", {
             room: d.room_id,
             id: d.payload.id,
@@ -33,7 +44,6 @@ export const chatWsMiddleware: Middleware = (store) => (next) => (action) => {
             incomingMessage({ roomId: d.room_id, msg: d.payload }),
           );
           break;
-        }
 
         case "badge":
           store.dispatch(badge({ roomId: d.room_id, unread: d.unread }));
@@ -51,7 +61,7 @@ export const chatWsMiddleware: Middleware = (store) => (next) => (action) => {
       }
     });
 
-    (socket as any)._initialized = true;
+    chatSocket._initialized = true;
   }
 
   return next(action);
