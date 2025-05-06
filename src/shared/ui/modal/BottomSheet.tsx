@@ -3,14 +3,21 @@
 import { ReactNode, useRef } from "react";
 import { motion, AnimatePresence, useDragControls } from "framer-motion";
 
-type Props = {
+// To fix the serialization error, we need to move the component logic into a client component
+// but keep the parent component as a simple wrapper
+
+// This is the client component with all the logic
+function BottomSheetClient({
+  isOpen,
+  onClose,
+  children,
+  title,
+}: {
   isOpen: boolean;
   onClose: () => void;
   children: ReactNode;
   title?: string;
-};
-
-export const BottomSheet = ({ isOpen, onClose, children, title }: Props) => {
+}) {
   const dragControls = useDragControls();
   const sheetRef = useRef(null);
 
@@ -44,7 +51,7 @@ export const BottomSheet = ({ isOpen, onClose, children, title }: Props) => {
               }
             }}
           >
-            {/* Граббер — кликабельный и drag-enabled */}
+            {/* Drag handle */}
             <motion.div
               className="mx-auto mb-4 mt-2 h-1.5 w-12 rounded-full bg-gray-300 cursor-pointer touch-none"
               onPointerDown={(e) => dragControls.start(e)}
@@ -63,4 +70,33 @@ export const BottomSheet = ({ isOpen, onClose, children, title }: Props) => {
       )}
     </AnimatePresence>
   );
-};
+}
+
+// This is the public component which will be imported by other components
+// It must only have serializable props
+export function BottomSheet({
+  isOpen,
+  onCloseAction,
+  children,
+  title,
+}: {
+  isOpen: boolean;
+  onCloseAction: string; // Use a string identifier instead of a function
+  children: ReactNode;
+  title?: string;
+}) {
+  // Convert the action string to a function
+  const handleClose = () => {
+    // Dispatch a custom event that parent components can listen for
+    const event = new CustomEvent("bottomsheet:close", {
+      detail: { action: onCloseAction },
+    });
+    window.dispatchEvent(event);
+  };
+
+  return (
+    <BottomSheetClient isOpen={isOpen} onClose={handleClose} title={title}>
+      {children}
+    </BottomSheetClient>
+  );
+}

@@ -4,10 +4,13 @@ import { fetchWithAuth } from "@/shared/lib/fetchWithAuth";
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-interface ExtendedUserState extends UserState {
+type ExtendedUserState = UserState & {
   loading: boolean;
   error: string | null;
-}
+  is_following: boolean;
+  is_follower: boolean;
+  is_mutual: boolean;
+};
 
 const initialState: ExtendedUserState = {
   id: "",
@@ -25,6 +28,9 @@ const initialState: ExtendedUserState = {
   },
   loading: false,
   error: null,
+  is_following: false,
+  is_follower: false,
+  is_mutual: false,
 };
 
 export const fetchCurrentUser = createAsyncThunk<

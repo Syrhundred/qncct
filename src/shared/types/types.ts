@@ -20,7 +20,7 @@ export interface AuthState {
 
 export interface UserProfile {
   username: string;
-  interests?: string[];
+  interests: string[];
   avatar_url: string;
   about_me: string;
 }
