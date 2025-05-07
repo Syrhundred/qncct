@@ -17,10 +17,12 @@ export default function GeocodeMap({
   containerSize,
   currentEvent,
   selectedInterests,
+  isEvent,
 }: {
   containerSize: string;
   currentEvent?: [number, number];
   selectedInterests?: string[];
+  isEvent: boolean;
 }) {
   const mapRef = useRef<YMapType | undefined>(undefined);
   const dispatch = useDispatch<AppDispatch>();
@@ -146,34 +148,54 @@ export default function GeocodeMap({
           />
         )}
 
-        {events.map((event) => {
-          if (!event.latitude || !event.longitude) return null;
-          const coords = normalizeCoordinates(event.longitude, event.latitude);
-          const eventId = Number(event.id);
-          const isActive =
-            event.id !== undefined && activePlacemark === eventId;
+        {isEvent
+          ? currentEvent && (
+              <Placemark
+                geometry={currentEvent}
+                properties={{
+                  hintContent: "Event location",
+                  balloonContent: "This event",
+                }}
+                options={{
+                  iconLayout: "default#image",
+                  iconImageHref: "/assets/img/map/placemaker.png",
+                  iconImageSize: [40, 40],
+                  iconImageOffset: [-20, -40],
+                  cursor: "default",
+                }}
+              />
+            )
+          : events.map((event) => {
+              if (!event.latitude || !event.longitude) return null;
+              const coords = normalizeCoordinates(
+                event.longitude,
+                event.latitude,
+              );
+              const eventId = Number(event.id);
+              const isActive =
+                event.id !== undefined && activePlacemark === eventId;
 
-          return (
-            <Placemark
-              key={event.id}
-              geometry={coords}
-              onClick={() => handleEventClick(event)}
-              properties={{
-                iconContent: isActive
-                  ? `<div class="pulse-animation">${event.name}</div>`
-                  : event.name,
-                hintContent: event.name,
-              }}
-              options={{
-                iconLayout: "default#image",
-                iconImageHref: "/assets/img/map/placemaker.png",
-                iconImageSize: isActive ? [50, 50] : [30, 30],
-                iconImageOffset: isActive ? [-20, -50] : [-16, -42],
-                cursor: "pointer",
-              }}
-            />
-          );
-        })}
+              return (
+                <Placemark
+                  key={event.id}
+                  geometry={coords}
+                  onClick={() => handleEventClick(event)}
+                  properties={{
+                    iconContent: isActive
+                      ? `<div class="pulse-animation">${event.name}</div>`
+                      : event.name,
+                    hintContent: event.name,
+                  }}
+                  options={{
+                    iconLayout: "default#image",
+                    iconImageHref: "/assets/img/map/placemaker.png",
+                    iconImageSize: isActive ? [50, 50] : [30, 30],
+                    iconImageOffset: isActive ? [-20, -50] : [-16, -42],
+                    cursor: "pointer",
+                  }}
+                />
+              );
+            })}
       </YandexMap>
 
       {/* Animations */}
@@ -211,21 +233,20 @@ export default function GeocodeMap({
         }
       `}</style>
 
-      {/* Control buttons */}
-      <div className="absolute bottom-24 right-4">
-        {/* Location center button */}
-        <button
-          onClick={centerOnUserLocation}
-          className="bg-white text-primary-purple rounded-full w-12 h-12 flex items-center justify-center shadow-lg transition-transform duration-200 hover:scale-110"
-          aria-label="Center on my location"
-          disabled={isUserLocationLoading || !userCoords}
-        >
-          <LocateFixed />
-        </button>
-      </div>
+      {!isEvent && (
+        <div className="absolute bottom-24 right-4">
+          <button
+            onClick={centerOnUserLocation}
+            className="bg-white text-primary-purple rounded-full w-12 h-12 flex items-center justify-center shadow-lg transition-transform duration-200 hover:scale-110"
+            aria-label="Center on my location"
+            disabled={isUserLocationLoading || !userCoords}
+          >
+            <LocateFixed />
+          </button>
+        </div>
+      )}
 
-      {/* Event details panel with EventCard */}
-      {showEventDetails && selectedEvent && (
+      {!isEvent && showEventDetails && selectedEvent && (
         <div className={getDetailsPanelClasses()}>
           <div className="flex p-4 justify-center">
             <EventCard event={selectedEvent} />

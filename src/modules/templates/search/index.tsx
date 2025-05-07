@@ -75,6 +75,7 @@ export default function SearchMap() {
       </div>
 
       <YandexMap
+        isEvent={false}
         containerSize="h-screen"
         selectedInterests={selectedInterests}
       />

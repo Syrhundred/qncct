@@ -228,6 +228,7 @@ export default function Event() {
           {/* Map */}
           {coords && (
             <YandexMap
+              isEvent={true}
               currentEvent={coords}
               containerSize="h-[200px] rounded-xl overflow-hidden"
             />

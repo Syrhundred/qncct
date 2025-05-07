@@ -18,12 +18,14 @@ interface LazyYandexMapProps {
   containerSize: string;
   currentEvent?: [number, number];
   selectedInterests?: string[];
+  isEvent: boolean;
 }
 
 export default function LazyYandexMap({
   containerSize,
   currentEvent,
   selectedInterests,
+  isEvent,
 }: LazyYandexMapProps) {
   const apiKey = process.env.NEXT_PUBLIC_YANDEX_MAPS_API_KEY;
 
@@ -31,6 +33,7 @@ export default function LazyYandexMap({
     <YMaps query={{ apikey: apiKey }}>
       <Suspense>
         <LazyMap
+          isEvent={isEvent}
           containerSize={containerSize}
           currentEvent={currentEvent}
           selectedInterests={selectedInterests}
