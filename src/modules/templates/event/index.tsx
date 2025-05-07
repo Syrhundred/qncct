@@ -274,9 +274,12 @@ export default function Event() {
                 See All
               </Link>
             </div>
-            <div className="flex overflow-x-auto gap-4 scrollbar-hide">
+            <div className="flex overflow-x-auto gap-4 scrollbar-hide pb-2">
               {similarEvents.map((ev) => (
-                <div key={ev.id} className="min-w-[280px]">
+                <div
+                  key={ev.id}
+                  className="shrink-0 min-w-[280px] md:min-w-[355px] bg-white rounded-xl shadow-sm p-2"
+                >
                   <EventCard event={ev} />
                 </div>
               ))}
