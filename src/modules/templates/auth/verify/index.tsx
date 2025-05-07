@@ -66,7 +66,7 @@ export default function VerifyPhone() {
   }, [dispatch, searchParams, router]);
 
   // Only render the main content if token is verified
-  if (!tokenVerified || accessToken) {
+  if (!tokenVerified || !accessToken) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         Verifying your identity...
