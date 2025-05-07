@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { IEvent } from "@/shared/types/types";
 import EventCard from "@/shared/ui/event-card/EventCard";
 import { fetchWithAuth } from "@/shared/lib/fetchWithAuth";
-import Link from "next/link";
 import { Container } from "@/modules/shared/ui/core/Container";
 
 export default function TrendingEvents() {
