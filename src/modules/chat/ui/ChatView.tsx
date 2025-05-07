@@ -23,6 +23,7 @@ import {
 
 import { socket } from "@/shared/lib/socket";
 import { MessageDTO } from "@/modules/chat/api/types";
+import { Send } from "lucide-react";
 
 /* ───────── вспомогательный хук ───────── */
 function usePageVisible() {
@@ -119,7 +120,6 @@ export default function ChatView() {
       try {
         const d = JSON.parse(e.data);
 
-        // Only process messages for current room
         if (d.room_id !== roomId) return;
 
         if (d.type === "message") {
@@ -127,7 +127,6 @@ export default function ChatView() {
             "[chat] Message received in room handler",
             d.payload.id,
           );
-          // Direct dispatch for immediate update
           dispatch(incomingMessage({ roomId, msg: d.payload }));
         }
         if (d.type === "typing") {
@@ -327,10 +326,7 @@ export default function ChatView() {
             input.trim() ? "bg-gradient" : "bg-gray-300"
           }`}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" stroke="currentColor">
-            <path d="M22 2 11 13" />
-            <path d="M22 2 15 22 11 13 2 9l20-7Z" />
-          </svg>
+          <Send />
         </button>
       </div>
     </div>

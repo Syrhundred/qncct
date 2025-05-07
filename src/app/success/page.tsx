@@ -48,7 +48,7 @@ function AuthHandler() {
     if (isActive) {
       router.replace("/");
     } else {
-      router.replace("/complete-registration");
+      router.replace("/verify");
     }
   }, [searchParams, router]);
 
