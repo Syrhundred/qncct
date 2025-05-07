@@ -60,7 +60,7 @@ export default function Login() {
       if (isActive === "true") {
         router.replace("/");
       } else {
-        router.push("/complete-registration");
+        router.push("/verify");
       }
     }
   }, [isAuth, router, dispatch, isClient]);
