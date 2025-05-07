@@ -1,4 +1,5 @@
-import type { Middleware } from "@reduxjs/toolkit";
+// src/modules/chat/model/chatWsMiddleware.ts - UPDATED
+import type { Middleware, Action } from "@reduxjs/toolkit";
 import { socket } from "@/shared/lib/socket";
 import {
   init,
@@ -16,53 +17,119 @@ interface ChatSocket {
   _initialized?: boolean;
 }
 
-export const chatWsMiddleware: Middleware = (store) => (next) => (action) => {
-  if (typeof window === "undefined") return next(action);
+// Define an interface for actions with type property
+interface TypedAction extends Action {
+  type: string;
+}
 
-  const chatSocket = socket as ChatSocket;
+export const chatWsMiddleware: Middleware = (store) => {
+  // Create and maintain a single message handler
+  let messageHandler: ((e: MessageEvent) => void) | null = null;
 
-  /* однократная инициализация */
-  const token = localStorage.getItem("access_token");
-  if (token && !chatSocket._initialized) {
-    chatSocket.connect(token);
+  return (next) => (action) => {
+    // Ignore on server-side rendering
+    if (typeof window === "undefined") return next(action);
 
-    chatSocket.addListener((e) => {
-      const d = JSON.parse(e.data);
+    const chatSocket = socket as ChatSocket;
 
-      switch (d.type) {
-        case "init":
-          store.dispatch(init(d.rooms));
-          break;
+    /* однократная инициализация */
+    const token = localStorage.getItem("access_token");
+    if (token && !chatSocket._initialized) {
+      chatSocket.connect(token);
 
-        case "message":
-          console.debug("[mw] message →", {
-            room: d.room_id,
-            id: d.payload.id,
-            mine: d.payload.is_mine,
-          });
-          store.dispatch(
-            incomingMessage({ roomId: d.room_id, msg: d.payload }),
-          );
-          break;
-
-        case "badge":
-          store.dispatch(badge({ roomId: d.room_id, unread: d.unread }));
-          break;
-
-        case "typing":
-          store.dispatch(
-            typingAction({
-              roomId: d.room_id,
-              username: d.username,
-              state: d.state,
-            }),
-          );
-          break;
+      // Remove previous handler if exists
+      if (messageHandler) {
+        // If we had an implementation for removing listeners
+        // chatSocket.removeListener(messageHandler);
       }
-    });
 
-    chatSocket._initialized = true;
-  }
+      messageHandler = (e: MessageEvent) => {
+        try {
+          const d = JSON.parse(e.data);
 
-  return next(action);
+          if (!d || typeof d !== "object" || !d.type) {
+            return; // Invalid message format
+          }
+
+          switch (d.type) {
+            case "init":
+              if (Array.isArray(d.rooms)) {
+                console.debug(
+                  "[mw] Received init with",
+                  d.rooms.length,
+                  "rooms",
+                );
+                store.dispatch(init(d.rooms));
+              }
+              break;
+
+            case "message":
+              if (d.room_id && d.payload && d.payload.id) {
+                console.debug("[mw] Received message →", {
+                  room: d.room_id,
+                  content: d.payload.content?.substring(0, 20),
+                  id: d.payload.id,
+                  mine: d.payload.is_mine,
+                });
+
+                // IMPORTANT: Use next() directly to avoid potential middleware re-entry issues
+                // This allows the message to be dispatched immediately
+                next(incomingMessage({ roomId: d.room_id, msg: d.payload }));
+              }
+              break;
+
+            case "badge":
+              if (d.room_id && typeof d.unread === "number") {
+                console.debug(
+                  "[mw] Received badge update for",
+                  d.room_id,
+                  "unread:",
+                  d.unread,
+                );
+                next(badge({ roomId: d.room_id, unread: d.unread }));
+              }
+              break;
+
+            case "typing":
+              if (d.room_id && d.username) {
+                console.debug(
+                  "[mw] Typing status:",
+                  d.username,
+                  "in",
+                  d.room_id,
+                  "is",
+                  d.state ? "typing" : "stopped",
+                );
+                next(
+                  typingAction({
+                    roomId: d.room_id,
+                    username: d.username,
+                    state: !!d.state,
+                  }),
+                );
+              }
+              break;
+
+            default:
+              console.debug("[mw] Unhandled message type:", d.type);
+          }
+        } catch (err) {
+          console.error("[mw] Error handling WebSocket message", err, e.data);
+        }
+      };
+
+      chatSocket.addListener(messageHandler);
+      chatSocket._initialized = true;
+    }
+
+    // Handle certain action types that might need to interact with the WebSocket
+    // Type assertion to ensure TypeScript knows action has a type property
+    const typedAction = action as TypedAction;
+    if (typedAction.type === "user/logout") {
+      // Reset the initialization flag when user logs out
+      chatSocket._initialized = false;
+    }
+
+    return next(action);
+  };
 };
