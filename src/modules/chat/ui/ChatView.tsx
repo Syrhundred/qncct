@@ -243,7 +243,7 @@ export default function ChatView() {
       type: "send",
       room_id: roomId,
       content: trimmedInput,
-      priority: "high", // Signal high priority
+      priority: "high",
     });
 
     if (!sendResult) {

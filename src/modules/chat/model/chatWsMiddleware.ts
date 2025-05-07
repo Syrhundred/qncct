@@ -7,6 +7,7 @@ import {
   incomingMessage,
   typing as typingAction,
 } from "./chatSlice";
+import { chatApi } from "@/modules/chat/api/chatApiSlice";
 
 interface ChatSocket {
   /** Подключает веб-сокет с JWT */
@@ -78,17 +79,20 @@ export const chatWsMiddleware: Middleware = (store) => {
               }
               break;
 
-            case "badge":
-              if (d.room_id && typeof d.unread === "number") {
-                console.debug(
-                  "[mw] Received badge update for",
-                  d.room_id,
-                  "unread:",
-                  d.unread,
-                );
-                next(badge({ roomId: d.room_id, unread: d.unread }));
-              }
+            case "badge": {
+              console.debug("[mw] Received badge", d.room_id, d.unread);
+              next(badge({ roomId: d.room_id, unread: d.unread }));
+
+              // 💡  Инвалидируем историю — RTK-Query сам сделает refetch,
+              //     компонент подхватит новые данные.
+              store.dispatch(
+                chatApi.util.invalidateTags([
+                  { type: "History", id: d.room_id },
+                ]),
+              );
+
               break;
+            }
 
             case "typing":
               if (d.room_id && d.username) {
