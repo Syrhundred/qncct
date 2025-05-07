@@ -87,7 +87,7 @@ export const chatSlice = createSlice({
       const current = state.messages[roomId] ?? [];
 
       /* ① убираем tmp-дубль, если пришёл реальный ответ от сервера */
-      if (msg.is_mine && !isTmp(msg)) {
+      if (!isTmp(msg)) {
         const dupIdx = current.findIndex(
           (m) =>
             isTmp(m) &&
