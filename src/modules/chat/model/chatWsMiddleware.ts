@@ -1,4 +1,9 @@
-// src/modules/chat/model/chatWsMiddleware.ts - UPDATED
+/* -------------------------------------------------------------------------- */
+/* chatWsMiddleware.ts – WebSocket ↔ Redux                                   */
+/*  ▸  инициализирует сокет один раз                                          */
+/*  ▸  маппит события WS → actions                                            */
+/*  ▸  триггерит invalidateTags, чтобы RTK-Query сам refetch-ил историю       */
+/* -------------------------------------------------------------------------- */
 import type { Middleware, Action } from "@reduxjs/toolkit";
 import { socket } from "@/shared/lib/socket";
 import {
@@ -8,135 +13,162 @@ import {
   typing as typingAction,
 } from "./chatSlice";
 import { chatApi } from "@/modules/chat/api/chatApiSlice";
+import type { RoomDTO, MessageDTO } from "../api/types";
 
+/* ---------- WebSocket event types ---------- */
+interface InitEvent {
+  type: "init";
+  rooms: RoomDTO[];
+}
+
+interface BadgeEvent {
+  type: "badge";
+  room_id: string;
+  unread: number;
+}
+
+interface TypingEvent {
+  type: "typing";
+  room_id: string;
+  username: string;
+  state: boolean;
+}
+
+interface MessageEvent {
+  type: "message";
+  room_id: string;
+  payload: MessageDTO;
+}
+
+type WebSocketEvent =
+  | InitEvent
+  | BadgeEvent
+  | TypingEvent
+  | MessageEvent
+  | MessageDTO;
+
+/* ---------- расширяем сокет небольшим API ---------- */
 interface ChatSocket {
-  /** Подключает веб-сокет с JWT */
   connect(token: string): void;
-  /** Унифицированный метод подписки на сообщения */
-  addListener(cb: (e: MessageEvent<string>) => void): void;
-  /** Флаг одноразовой инициализации; выставляем только на клиенте */
+  addListener(cb: (e: globalThis.MessageEvent<string>) => void): void;
+  removeListener?(cb: (e: globalThis.MessageEvent<string>) => void): void;
   _initialized?: boolean;
 }
 
-// Define an interface for actions with type property
+/* ---------- чисто тип, чтобы TS не ругался ---------- */
 interface TypedAction extends Action {
   type: string;
 }
 
 export const chatWsMiddleware: Middleware = (store) => {
-  // Create and maintain a single message handler
-  let messageHandler: ((e: MessageEvent) => void) | null = null;
+  /* один живой handler на всё приложение */
+  let handler: ((e: globalThis.MessageEvent) => void) | null = null;
 
   return (next) => (action) => {
-    // Ignore on server-side rendering
+    /* SSR пропускаем */
     if (typeof window === "undefined") return next(action);
 
+    /* -------------------- lazy-init -------------------- */
     const chatSocket = socket as ChatSocket;
-
-    /* однократная инициализация */
     const token = localStorage.getItem("access_token");
+
     if (token && !chatSocket._initialized) {
       chatSocket.connect(token);
 
-      // Remove previous handler if exists
-      if (messageHandler) {
-        // If we had an implementation for removing listeners
-        // chatSocket.removeListener(messageHandler);
+      /* safety: предыдущий handler снимаем, если API есть */
+      if (handler && chatSocket.removeListener) {
+        chatSocket.removeListener(handler);
       }
 
-      messageHandler = (e: MessageEvent) => {
+      /* основной обработчик WS-сообщений */
+      handler = (e: globalThis.MessageEvent) => {
+        let d: WebSocketEvent;
         try {
-          const d = JSON.parse(e.data);
-
-          if (!d || typeof d !== "object" || !d.type) {
-            return; // Invalid message format
-          }
-
-          switch (d.type) {
-            case "init":
-              if (Array.isArray(d.rooms)) {
-                console.debug(
-                  "[mw] Received init with",
-                  d.rooms.length,
-                  "rooms",
-                );
-                store.dispatch(init(d.rooms));
-              }
-              break;
-
-            case "message":
-              if (d.room_id && d.payload && d.payload.id) {
-                console.debug("[mw] Received message →", {
-                  room: d.room_id,
-                  content: d.payload.content?.substring(0, 20),
-                  id: d.payload.id,
-                  mine: d.payload.is_mine,
-                });
-
-                // IMPORTANT: Use next() directly to avoid potential middleware re-entry issues
-                // This allows the message to be dispatched immediately
-                next(incomingMessage({ roomId: d.room_id, msg: d.payload }));
-              }
-              break;
-
-            case "badge": {
-              console.debug("[mw] Received badge", d.room_id, d.unread);
-              next(badge({ roomId: d.room_id, unread: d.unread }));
-
-              // 💡  Инвалидируем историю — RTK-Query сам сделает refetch,
-              //     компонент подхватит новые данные.
-              store.dispatch(
-                chatApi.util.invalidateTags([
-                  { type: "History", id: d.room_id },
-                ]),
-              );
-
-              break;
-            }
-
-            case "typing":
-              if (d.room_id && d.username) {
-                console.debug(
-                  "[mw] Typing status:",
-                  d.username,
-                  "in",
-                  d.room_id,
-                  "is",
-                  d.state ? "typing" : "stopped",
-                );
-                next(
-                  typingAction({
-                    roomId: d.room_id,
-                    username: d.username,
-                    state: !!d.state,
-                  }),
-                );
-              }
-              break;
-
-            default: {
-              //  ➜  No `type`, но похоже на MessageDTO
-              if (d && d.room_id && d.id && d.content) {
-                next(incomingMessage({ roomId: d.room_id, msg: d }));
-                return;
-              }
-              console.debug("[mw] Unhandled message:", d);
-            }
-          }
-        } catch (err) {
-          console.error("[mw] Error handling WebSocket message", err, e.data);
+          d = JSON.parse(e.data as string) as WebSocketEvent;
+        } catch {
+          return;
         }
+
+        /* ---------------- init (первичное состояние) ---------------- */
+        if ("type" in d && d.type === "init" && "rooms" in d) {
+          const { rooms } = d;
+          console.debug("[mw] init:", rooms.length, "rooms");
+          store.dispatch(init(rooms));
+
+          /* invalidate history кэша для каждой комнаты */
+          store.dispatch(
+            chatApi.util.invalidateTags(
+              rooms.map((r) => ({ type: "History" as const, id: r.room_id })),
+            ),
+          );
+          return;
+        }
+
+        /* ---------------- badge (уведомление) ---------------------- */
+        if (
+          "type" in d &&
+          d.type === "badge" &&
+          "room_id" in d &&
+          "unread" in d
+        ) {
+          const { room_id, unread } = d;
+          console.debug("[mw] badge:", room_id, unread);
+          next(badge({ roomId: room_id, unread }));
+          store.dispatch(
+            chatApi.util.invalidateTags([{ type: "History", id: room_id }]),
+          );
+          return;
+        }
+
+        /* ---------------- typing ---------------------- */
+        if (
+          "type" in d &&
+          d.type === "typing" &&
+          "room_id" in d &&
+          "username" in d &&
+          "state" in d
+        ) {
+          const { room_id, username, state } = d;
+          next(
+            typingAction({
+              roomId: room_id,
+              username,
+              state: !!state,
+            }),
+          );
+          return;
+        }
+
+        /* ---------------- message (нормальный) --------------------- */
+        if (
+          "type" in d &&
+          d.type === "message" &&
+          "room_id" in d &&
+          "payload" in d
+        ) {
+          const { room_id, payload } = d;
+          console.debug("[mw] message:", payload.id);
+          next(incomingMessage({ roomId: room_id, msg: payload }));
+          return;
+        }
+
+        /* ---------------- raw MessageDTO без type ------------------ */
+        if ("room_id" in d && "id" in d && "content" in d) {
+          const m = d as MessageDTO;
+          next(incomingMessage({ roomId: m.room_id, msg: m }));
+          return;
+        }
+
+        console.debug("[mw] unhandled WS payload:", d);
       };
 
-      chatSocket.addListener(messageHandler);
+      chatSocket.addListener(handler);
       chatSocket._initialized = true;
     }
 
-    // Handle certain action types that might need to interact with the WebSocket
-    // Type assertion to ensure TypeScript knows action has a type property
-    const typedAction = action as TypedAction;
-    if (typedAction.type === "user/logout") {
-      // Reset the initialization flag when user logs out
+    /* ---------------- logout → сбрасываем флаг -------------------- */
+    const a = action as TypedAction;
+    if (a.type === "user/logout") {
       chatSocket._initialized = false;
     }
 

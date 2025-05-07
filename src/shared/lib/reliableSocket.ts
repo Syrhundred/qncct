@@ -117,6 +117,8 @@ export class ReliableSocket {
   /* ─ ping/pong ─ */
   private startPing() {
     this.stopPing();
+    // const PING_EVERY = 25_000; // 25 с
+    const PONG_TIMEOUT = 45_000; // 45 с
 
     this.pingTimer = setInterval(() => {
       if (this.ws?.readyState !== WebSocket.OPEN) return;
@@ -126,7 +128,7 @@ export class ReliableSocket {
       const pongTimeout = setTimeout(() => {
         console.warn("[chat] Pong timeout - closing connection");
         this.ws?.close();
-      }, 20000);
+      }, PONG_TIMEOUT);
 
       const pongHandler = (e: MessageEvent) => {
         try {
