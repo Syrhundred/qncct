@@ -1,12 +1,23 @@
-"use client";
-
 import { destroyCookie } from "nookies";
 
-export const fetchWithAuth = async (input: RequestInfo, init?: RequestInit) => {
+export const fetchWithAuth = async (
+  input: RequestInfo,
+  init: RequestInit = {},
+) => {
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+
+  const headers = {
+    ...(init.headers || {}),
+    Authorization: token ? `Bearer ${token}` : "",
+    "Content-Type": "application/json",
+  };
+
   try {
     const res = await fetch(input, {
       ...init,
-      credentials: "include", // <<<<<<<<<< ОБЯЗАТЕЛЬНО
+      headers,
+      credentials: "include",
     });
 
     if (res.status === 401) {
@@ -16,6 +27,7 @@ export const fetchWithAuth = async (input: RequestInfo, init?: RequestInit) => {
       if (typeof window !== "undefined") {
         window.location.href = "/login";
       }
+
       throw new Error("Unauthorized");
     }
 

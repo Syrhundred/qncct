@@ -9,25 +9,20 @@ import Image from "next/image";
 
 export default function EventCard({ event }: { event: IEvent }) {
   const formattedDate = dayjs(event.date).format("D MMMM YYYY");
-  const formattedAddress = event?.address?.substring(
-    0,
-    event.address.indexOf(", К"),
-  );
+  const formattedAddress = event?.address?.split(", К")[0] || event?.address;
 
   const [distance, setDistance] = useState<string>("");
   const userCoords = useAppSelector((state) => state.userLocation.coords);
+
   const normalizeCoordinates = (
     lng: number | string,
     lat: number | string,
-  ): [number, number] => {
-    return [Number(lat), Number(lng)];
-  };
+  ): [number, number] => [Number(lat), Number(lng)];
+
   const coords =
     event?.latitude && event?.longitude
-      ? normalizeCoordinates(event?.longitude, event?.latitude)
+      ? normalizeCoordinates(event.longitude, event.latitude)
       : undefined;
-
-  // const { handleJoin, isOwner } = useJoinEvent(event);
 
   useEffect(() => {
     if (userCoords && coords) {
@@ -41,12 +36,12 @@ export default function EventCard({ event }: { event: IEvent }) {
       href={`/event/${event.id}`}
       className="w-full md:max-w-[355px] h-[309px] bg-white rounded-[10px] shadow-sm"
     >
-      <div className="w-full h-44 bg-gray-50 rounded-t-[10px] flex justify-center">
-        {event.images[0]?.url ? (
+      <div className="relative w-full h-44 bg-gray-50 rounded-t-[10px] flex justify-center">
+        {event.images?.length ? (
           <Image
             height={1000}
             width={1000}
-            src={event.images[0]?.url}
+            src={event.images[0].url}
             className="w-full h-full object-cover rounded-t-[10px]"
             alt="banner"
           />
@@ -68,6 +63,7 @@ export default function EventCard({ event }: { event: IEvent }) {
           </span>
         </div>
       </div>
+
       <div className="p-3 flex flex-col justify-between h-32">
         <h3 className="font-semibold">{event.name}</h3>
         <div className="flex justify-between items-start text-xs">
@@ -81,31 +77,19 @@ export default function EventCard({ event }: { event: IEvent }) {
           </span>
         </div>
         <div className="w-full flex justify-between items-center">
-          <span className="text-sm flex gap-2">
+          <span className="text-sm flex gap-2 items-center">
             <Image
               width={1000}
               height={1000}
               src={
-                event.created_by?.profile?.avatar_url
-                  ? event.created_by?.profile?.avatar_url
-                  : "/assets/img/event-card/avatar.svg"
+                event.created_by?.profile?.avatar_url ||
+                "/assets/img/event-card/avatar.svg"
               }
               className="rounded-full w-5 h-5"
               alt="avatar"
             />
             {event.created_by?.profile?.username}
           </span>
-          {/*{!isOwner && (*/}
-          {/*  <SmallButton*/}
-          {/*    buttonText="Join"*/}
-          {/*    state={false}*/}
-          {/*    buttonType="button"*/}
-          {/*    size="px-11 py-2"*/}
-          {/*    onClick={() => {*/}
-          {/*      handleJoin();*/}
-          {/*    }}*/}
-          {/*  />*/}
-          {/*)}*/}
         </div>
       </div>
     </Link>

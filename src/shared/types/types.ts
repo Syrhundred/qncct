@@ -45,39 +45,44 @@ export interface UserState {
 export interface IEvent {
   id: string;
   name: string;
+  description: string;
   date: string;
   address: string;
   latitude: number;
-  description: string;
   longitude: number;
   is_joined: boolean;
+
   category: {
     id: string;
     name: string;
   };
+
   created_by: {
     id: string;
     email: string;
     phone_number: string;
     role: string;
     is_active: boolean;
+    followers_count: number;
+    following_count: number;
     profile: {
-      avatar_url: string;
       username: string;
       interests: string[];
+      avatar_url: string;
+      about_me: string;
     };
   };
-  images: [
-    {
-      id: string;
-      url: string;
-      is_mine: boolean;
-    },
-  ];
+
+  images: {
+    id: string;
+    url: string;
+    is_main: boolean;
+  }[];
+
   participants_count: number;
   participants_preview: {
     user_id: string;
     username: string;
     avatar_url: string;
-  };
+  }[];
 }
