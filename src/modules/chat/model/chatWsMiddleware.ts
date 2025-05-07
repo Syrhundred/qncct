@@ -1,6 +1,3 @@
-/* -------------------------------------------------------------------------- */
-/* chatWsMiddleware.ts                                                        */
-/* -------------------------------------------------------------------------- */
 import type { Middleware, Action } from "@reduxjs/toolkit";
 import { socket } from "@/shared/lib/socket";
 import {
@@ -13,7 +10,7 @@ import { chatApi } from "@/modules/chat/api/chatApiSlice";
 import type { RoomDTO, MessageDTO } from "../api/types";
 import type { RootState } from "@/store";
 
-/* ---------- точные типы WS-payload’ов ---------- */
+/* ---------- точные типы WS-payload'ов ---------- */
 interface InitEvent {
   type: "init";
   rooms: RoomDTO[];
@@ -71,6 +68,9 @@ export const chatWsMiddleware: Middleware = (store) => {
         /* ---- актуальный id авторизованного юзера ---- */
         const authId = (store.getState() as RootState).user.id;
 
+        // Для отладки - добавьте эту строку для проверки значений
+        console.debug("[mw] Auth ID:", authId);
+
         /* ============== type guards + narrow ============== */
         if (isInitEvent(data)) {
           store.dispatch(init(data.rooms));
@@ -107,18 +107,42 @@ export const chatWsMiddleware: Middleware = (store) => {
         }
 
         if (isMessageEventWS(data)) {
+          // Отладочный лог для проверки ID
+          console.debug("[mw] MessageEventWS payload:", {
+            senderId: data.payload.sender?.id,
+            authId,
+            content: data.payload.content,
+          });
+
+          // Исправление: явно приводим ID к строке перед сравнением (если они разных типов)
+          const senderId = String(data.payload.sender?.id);
+          const userAuthId = String(authId);
+          const isMine = senderId === userAuthId;
+
           const msg: MessageDTO = {
             ...data.payload,
-            is_mine: data.payload.sender?.id === authId,
+            is_mine: isMine,
           };
           next(incomingMessage({ roomId: data.room_id, msg }));
           return;
         }
 
         if (isRawDTO(data)) {
+          // Отладочный лог для проверки ID
+          console.debug("[mw] RawDTO payload:", {
+            senderId: data.sender?.id,
+            authId,
+            content: data.content,
+          });
+
+          // Исправление: явно приводим ID к строке перед сравнением
+          const senderId = String(data.sender?.id);
+          const userAuthId = String(authId);
+          const isMine = senderId === userAuthId;
+
           const msg: MessageDTO = {
             ...data,
-            is_mine: data.sender?.id === authId,
+            is_mine: isMine,
           };
           next(incomingMessage({ roomId: msg.room_id, msg }));
           return;
