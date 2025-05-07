@@ -23,9 +23,10 @@ interface BadgeEvent {
 interface TypingEvent {
   type: "typing";
   room_id: string;
-  username: string;
+  user: { id: string; username: string };
   state: boolean;
 }
+
 interface MessageEventWS {
   type: "message";
   room_id: string;
@@ -101,7 +102,7 @@ export const chatWsMiddleware: Middleware = (store) => {
           next(
             typingAction({
               roomId: data.room_id,
-              username: data.username,
+              username: data.user.username,
               state: data.state,
             }),
           );
