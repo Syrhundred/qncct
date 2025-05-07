@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Formik, Form, Field, ErrorMessage, FormikHelpers } from "formik";
 import * as Yup from "yup";
 import { useDispatch } from "react-redux";
-import { loginUser, clearError, fetchUserProfile } from "@/store/authSlice";
+import { loginUser, clearError } from "@/store/authSlice";
 import { AppDispatch } from "@/store";
 import { useRouter } from "next/navigation";
 import { Container } from "@/modules/shared/ui/core/Container";
@@ -11,6 +11,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Button from "@/modules/shared/ui/button/Button";
 import { useAppSelector } from "@/shared/hooks/useAppSelector";
+import { fetchCurrentUser } from "@/store/userSlice";
 
 // Validation schema for login form
 const validationSchema = Yup.object({
@@ -52,7 +53,7 @@ export default function Login() {
   useEffect(() => {
     if (isAuth && isClient) {
       // Fetch user profile after successful authentication
-      dispatch(fetchUserProfile());
+      dispatch(fetchCurrentUser());
 
       // Check if user is active
       const isActive = localStorage.getItem("is_active");
