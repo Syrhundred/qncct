@@ -1,7 +1,42 @@
-interface SocketMessage {
+interface SocketMessageBase {
   type: string;
-  [key: string]: any;
+  room_id?: string;
+  priority?: "low" | "normal" | "high";
 }
+
+interface SendMessage extends SocketMessageBase {
+  type: "send";
+  room_id: string;
+  content: string;
+}
+
+interface TypingMessage extends SocketMessageBase {
+  type: "typing";
+  room_id: string;
+  state: boolean;
+}
+
+interface ReadMessage extends SocketMessageBase {
+  type: "read";
+  room_id: string;
+  last_msg_id: string;
+}
+
+interface InitMessage extends SocketMessageBase {
+  type: "init";
+  rooms: Array<{
+    room_id: string;
+    title: string;
+    banner: string;
+    unread: number;
+    last_msg_preview?: {
+      content?: string;
+      created_at?: string;
+    };
+  }>;
+}
+
+type SocketMessage = SendMessage | TypingMessage | ReadMessage | InitMessage;
 
 let currentToken = "";
 let reconnectAttempts = 0;
@@ -52,7 +87,7 @@ export const socket = {
     this.listeners.delete(cb);
   },
 
-  send(message: SocketMessage): boolean {
+  send<T extends SocketMessage>(message: T): boolean {
     if (!this.connected) {
       this.queue.push(message);
       return false;
