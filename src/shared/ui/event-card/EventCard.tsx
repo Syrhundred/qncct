@@ -54,7 +54,7 @@ export default function EventCard({ event }: { event: IEvent }) {
             alt="default"
           />
         )}
-        <div className="absolute overflow-hidden z-20 flex items-center justify-between md:justify-center px-10 md:px-0 md:gap-28 mt-3 w-full text-xs">
+        <div className="absolute overflow-hidden z-20 w-full flex items-center justify-between md:justify-center px-10 md:px-0 md:gap-28 mt-3 text-xs">
           <span className="bg-white bg-opacity-60 rounded flex items-center px-2 py-1 uppercase">
             {event.category?.name}
           </span>

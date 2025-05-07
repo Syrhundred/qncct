@@ -270,17 +270,17 @@ export default function Event() {
           <div className="mt-8 w-full">
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-lg font-semibold">Similar events</h3>
-              <Link href="/events" className="text-primary-purple text-sm">
+              <Link href="/" className="text-primary-purple text-sm">
                 See All
               </Link>
             </div>
-            <div className="flex overflow-x-auto gap-4 scrollbar-hide pb-2">
-              {similarEvents.map((ev) => (
+            <div className="flex overflow-x-auto gap-4 snap-x snap-mandatory px-1 scrollbar-hide no-scrollbar">
+              {similarEvents.map((event) => (
                 <div
-                  key={ev.id}
-                  className="shrink-0 min-w-[280px] md:min-w-[355px] bg-white rounded-xl shadow-sm p-2"
+                  key={event.id}
+                  className="shrink-0 snap-start w-[280px] md:w-[355px] rounded-[10px] border"
                 >
-                  <EventCard event={ev} />
+                  <EventCard event={event} />
                 </div>
               ))}
             </div>

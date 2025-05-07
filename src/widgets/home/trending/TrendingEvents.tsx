@@ -28,17 +28,15 @@ export default function TrendingEvents() {
   if (!events.length) return null;
 
   return (
-    <main className="w-full mt-4">
+    <main className="w-full mt-6">
       <Container>
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-start mb-4">Trending Events</h3>
-        </div>
+        <h3 className="text-start mb-4">Trending Events</h3>
 
         <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">
           {events.map((event) => (
             <div
               key={event.id}
-              className="shrink-0 w-[280px] md:w-[355px] bg-white rounded-xl shadow-sm p-2"
+              className="shrink-0 w-[305px] md:w-[355px] bg-white rounded-xl shadow-sm p-2"
             >
               <EventCard event={event} />
             </div>

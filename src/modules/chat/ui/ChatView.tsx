@@ -3,7 +3,6 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { v4 as uuid } from "uuid";
-import { useDispatch } from "react-redux";
 import { RootState } from "@/store";
 import { useAppSelector } from "@/shared/hooks/useAppSelector";
 import ChatHeader from "./ChatHeader";
@@ -19,6 +18,8 @@ import {
 import { socket } from "@/shared/lib/socket";
 import { MessageDTO } from "@/modules/chat/api/types";
 import { Send } from "lucide-react";
+import { fetchCurrentUser } from "@/store/userSlice";
+import { useAppDispatch } from "@/shared/lib/storeHooks";
 
 function usePageVisible() {
   const [visible, setVisible] = React.useState(
@@ -40,7 +41,7 @@ const EMPTY: MessageDTO[] = [];
 
 export default function ChatView() {
   const { roomId } = useParams<{ roomId: string }>();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const pageVisible = usePageVisible();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageListRef = useRef<HTMLDivElement>(null);
@@ -51,6 +52,10 @@ export default function ChatView() {
   const messages = useAppSelector(
     (s: RootState) => s.chat.messages[roomId] ?? EMPTY,
   );
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   const {
     data = [],
@@ -62,6 +67,10 @@ export default function ChatView() {
   });
 
   useEffect(() => {
+    dispatch(fetchCurrentUser());
+  }, [dispatch]);
+
+  useEffect(() => {
     if (isSuccess && data.length) {
       dispatch(historyLoaded({ roomId, msgs: data }));
     }
@@ -70,6 +79,27 @@ export default function ChatView() {
   useEffect(() => {
     if (pageVisible) refetch();
   }, [pageVisible, refetch]);
+
+  useEffect(() => {
+    const el = messageListRef.current;
+    if (!el) return;
+
+    const onScroll = () => {
+      const threshold = 120; // px от низа
+      const isBottom =
+        el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+      setIsAtBottom(isBottom);
+    };
+
+    el.addEventListener("scroll", onScroll);
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    if (isAtBottom) {
+      scrollToBottom();
+    }
+  }, [messages.length]);
 
   const handleWebSocketMessage = useCallback(
     (e: MessageEvent) => {
@@ -188,18 +218,30 @@ export default function ChatView() {
 
       <div className="fixed inset-x-0 bottom-0 mx-auto mb-4 flex max-w-lg items-center gap-2 px-4">
         <input
+          placeholder="Type a message..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && send()}
-          className="flex-1 rounded-full border px-4 py-2"
+          className="w-full rounded-lg border px-4 py-2"
         />
         <button
           onClick={send}
-          className="rounded-full bg-blue-500 p-2 text-white"
+          className="rounded-full bg-gradient p-2 text-white"
         >
           <Send size={20} />
         </button>
       </div>
+      {!isAtBottom && (
+        <div className="absolute bottom-28 right-6">
+          <button
+            onClick={scrollToBottom}
+            className="bg-primary-purple text-white rounded-full p-2 shadow-lg hover:scale-105 transition"
+            aria-label="Scroll to bottom"
+          >
+            ↓
+          </button>
+        </div>
+      )}
     </div>
   );
 }

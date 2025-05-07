@@ -15,7 +15,7 @@ export default function ChatHeader({
   const avatarSrc = banner || DEFAULT_AVATAR;
 
   return (
-    <div className="flex items-center gap-3 bg-gradient px-4 py-3 text-white">
+    <div className="flex items-center gap-3 bg-gradient px-4 py-3 text-white fixed w-full">
       <button onClick={() => router.back()}>
         <svg width="22" height="22" viewBox="0 0 24 24" stroke="currentColor">
           <path d="M15 18 9 12 15 6" strokeWidth="2" fill="none" />

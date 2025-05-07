@@ -32,7 +32,7 @@ export default function MessageBubble({ msg }: { msg: MessageDTO }) {
         className={clsx(
           "max-w-[70%] rounded-xl px-4 py-2",
           msg.is_mine
-            ? "bg-blue-400 text-white"
+            ? "bg-gradient text-white"
             : "bg-gray-100 dark:bg-gray-200 ",
           isTemporary && "opacity-50",
         )}

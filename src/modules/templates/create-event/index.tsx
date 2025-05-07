@@ -18,7 +18,7 @@ import Button from "@/modules/shared/ui/button/Button";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
 import { fetchCategories } from "@/store/categorySlice";
-import { createEvent } from "@/store/eventSlice";
+import { createEvent, fetchEvents } from "@/store/eventSlice";
 import { FormikTimePicker } from "@/widgets/create-event/FormikTimePicker";
 import "dayjs/plugin/utc";
 import { useRouter } from "next/navigation";
@@ -109,8 +109,10 @@ export default function CreateEvent() {
                 description: values.description,
               }),
             );
+            dispatch(fetchEvents());
             setTimeout(() => setIsSubmitting(false), 1500);
             router.push("/");
+            router.refresh();
           }}
         >
           {({ setFieldValue, values, touched, errors }) => (
