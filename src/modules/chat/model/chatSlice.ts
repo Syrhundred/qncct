@@ -91,7 +91,6 @@ export const chatSlice = createSlice({
         const dupIdx = current.findIndex(
           (m) =>
             isTmp(m) &&
-            m.is_mine &&
             m.content === msg.content &&
             Math.abs(Date.parse(m.created_at) - Date.parse(msg.created_at)) <
               15_000,

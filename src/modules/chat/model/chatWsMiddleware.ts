@@ -1,8 +1,5 @@
 /* -------------------------------------------------------------------------- */
-/* chatWsMiddleware.ts – WebSocket ↔ Redux                                   */
-/*  ▸  инициализирует сокет один раз                                          */
-/*  ▸  маппит события WS → actions                                            */
-/*  ▸  триггерит invalidateTags, чтобы RTK-Query сам refetch-ил историю       */
+/* chatWsMiddleware.ts                                                        */
 /* -------------------------------------------------------------------------- */
 import type { Middleware, Action } from "@reduxjs/toolkit";
 import { socket } from "@/shared/lib/socket";
@@ -14,55 +11,18 @@ import {
 } from "./chatSlice";
 import { chatApi } from "@/modules/chat/api/chatApiSlice";
 import type { RoomDTO, MessageDTO } from "../api/types";
-
-/* ---------- WebSocket event types ---------- */
-interface InitEvent {
-  type: "init";
-  rooms: RoomDTO[];
-}
-
-interface BadgeEvent {
-  type: "badge";
-  room_id: string;
-  unread: number;
-}
-
-interface TypingEvent {
-  type: "typing";
-  room_id: string;
-  username: string;
-  state: boolean;
-}
-
-interface MessageEvent {
-  type: "message";
-  room_id: string;
-  payload: MessageDTO;
-}
-
-type WebSocketEvent =
-  | InitEvent
-  | BadgeEvent
-  | TypingEvent
-  | MessageEvent
-  | MessageDTO;
+import type { RootState } from "@/store";
 
 /* ---------- расширяем сокет небольшим API ---------- */
 interface ChatSocket {
   connect(token: string): void;
-  addListener(cb: (e: globalThis.MessageEvent<string>) => void): void;
-  removeListener?(cb: (e: globalThis.MessageEvent<string>) => void): void;
+  addListener(cb: (e: MessageEvent<string>) => void): void;
+  removeListener?(cb: (e: MessageEvent<string>) => void): void;
   _initialized?: boolean;
 }
 
-/* ---------- чисто тип, чтобы TS не ругался ---------- */
-interface TypedAction extends Action {
-  type: string;
-}
-
 export const chatWsMiddleware: Middleware = (store) => {
-  /* один живой handler на всё приложение */
-  let handler: ((e: globalThis.MessageEvent) => void) | null = null;
+  let handler: ((e: MessageEvent) => void) | null = null;
 
   return (next) => (action) => {
     /* SSR пропускаем */
@@ -75,27 +35,25 @@ export const chatWsMiddleware: Middleware = (store) => {
     if (token && !chatSocket._initialized) {
       chatSocket.connect(token);
 
-      /* safety: предыдущий handler снимаем, если API есть */
       if (handler && chatSocket.removeListener) {
         chatSocket.removeListener(handler);
       }
 
-      /* основной обработчик WS-сообщений */
-      handler = (e: globalThis.MessageEvent) => {
-        let d: WebSocketEvent;
+      handler = (e: MessageEvent) => {
+        let d: any;
         try {
-          d = JSON.parse(e.data as string) as WebSocketEvent;
+          d = JSON.parse(e.data as string);
         } catch {
-          return;
+          return; // не JSON
         }
 
-        /* ---------------- init (первичное состояние) ---------------- */
-        if ("type" in d && d.type === "init" && "rooms" in d) {
-          const { rooms } = d;
-          console.debug("[mw] init:", rooms.length, "rooms");
-          store.dispatch(init(rooms));
+        /* === вспомогалка: актуальный id авторизованного юзера === */
+        const authId = (store.getState() as RootState).user.id;
 
-          /* invalidate history кэша для каждой комнаты */
+        /* ---------- init ---------- */
+        if (d.type === "init" && Array.isArray(d.rooms)) {
+          const rooms: RoomDTO[] = d.rooms;
+          store.dispatch(init(rooms));
           store.dispatch(
             chatApi.util.invalidateTags(
               rooms.map((r) => ({ type: "History" as const, id: r.room_id })),
@@ -104,61 +62,48 @@ export const chatWsMiddleware: Middleware = (store) => {
           return;
         }
 
-        /* ---------------- badge (уведомление) ---------------------- */
-        if (
-          "type" in d &&
-          d.type === "badge" &&
-          "room_id" in d &&
-          "unread" in d
-        ) {
-          const { room_id, unread } = d;
-          console.debug("[mw] badge:", room_id, unread);
-          next(badge({ roomId: room_id, unread }));
+        /* ---------- badge ---------- */
+        if (d.type === "badge") {
+          next(badge({ roomId: d.room_id, unread: d.unread }));
           store.dispatch(
-            chatApi.util.invalidateTags([{ type: "History", id: room_id }]),
+            chatApi.util.invalidateTags([{ type: "History", id: d.room_id }]),
           );
           return;
         }
 
-        /* ---------------- typing ---------------------- */
-        if (
-          "type" in d &&
-          d.type === "typing" &&
-          "room_id" in d &&
-          "username" in d &&
-          "state" in d
-        ) {
-          const { room_id, username, state } = d;
+        /* ---------- typing ---------- */
+        if (d.type === "typing") {
           next(
             typingAction({
-              roomId: room_id,
-              username,
-              state: !!state,
+              roomId: d.room_id,
+              username: d.username,
+              state: !!d.state,
             }),
           );
           return;
         }
 
-        /* ---------------- message (нормальный) --------------------- */
-        if (
-          "type" in d &&
-          d.type === "message" &&
-          "room_id" in d &&
-          "payload" in d
-        ) {
-          const { room_id, payload } = d;
-          console.debug("[mw] message:", payload.id);
-          next(incomingMessage({ roomId: room_id, msg: payload }));
+        /* ---------- message с type ---------- */
+        if (d.type === "message" && d.payload) {
+          const msg: MessageDTO = {
+            ...d.payload,
+            is_mine: d.payload.sender?.id === authId,
+          };
+          next(incomingMessage({ roomId: d.room_id, msg }));
           return;
         }
 
-        /* ---------------- raw MessageDTO без type ------------------ */
-        if ("room_id" in d && "id" in d && "content" in d) {
-          const m = d as MessageDTO;
-          next(incomingMessage({ roomId: m.room_id, msg: m }));
+        /* ---------- raw MessageDTO без type ---------- */
+        if (d.room_id && d.id && d.content) {
+          const msg: MessageDTO = {
+            ...d,
+            is_mine: d.sender?.id === authId,
+          };
+          next(incomingMessage({ roomId: msg.room_id, msg }));
           return;
         }
 
+        /* ---------- нераспознанное ---------- */
         console.debug("[mw] unhandled WS payload:", d);
       };
 
@@ -166,9 +111,8 @@ export const chatWsMiddleware: Middleware = (store) => {
       chatSocket._initialized = true;
     }
 
-    /* ---------------- logout → сбрасываем флаг -------------------- */
-    const a = action as TypedAction;
-    if (a.type === "user/logout") {
+    /* logout → сбросить флаг init */
+    if ((action as Action).type === "user/logout") {
       chatSocket._initialized = false;
     }
 
