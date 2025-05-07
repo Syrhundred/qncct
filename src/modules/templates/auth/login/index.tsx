@@ -85,7 +85,7 @@ export default function Login() {
     <div className="flex flex-col items-center justify-center min-h-screen bg-white">
       <Container>
         <div className="flex flex-col items-center gap-6">
-          <h1>Welcome back!</h1>
+          <h1>Welcome aback!</h1>
           <span className="text-lightgray text-xs text-center">
             Enter your email or phone number and password to continue.
           </span>
