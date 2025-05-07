@@ -34,11 +34,11 @@ export default function VerifyPhone() {
   const searchParams = useSearchParams();
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isCodeSent, setIsCodeSent] = useState(false);
+  const accessToken = localStorage.getItem("access_token") || "";
   const [tokenVerified, setTokenVerified] = useState(false);
   const [verificationError, setVerificationError] = useState("");
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Handle token verification on component mount
   useEffect(() => {
     const verifyUserToken = async () => {
       const token = searchParams.get("token");
@@ -48,14 +48,16 @@ export default function VerifyPhone() {
       }
 
       try {
-        const result = await dispatch(verifyToken(token)).unwrap();
-        if (!result?.token) {
-          router.push("/register");
-        } else {
+        const resultAction = await dispatch(verifyToken(token));
+        if (verifyToken.fulfilled.match(resultAction)) {
+          console.info("[auth] Token verified successfully");
           setTokenVerified(true);
+        } else {
+          console.warn("[auth] Token verification failed", resultAction);
+          router.push("/register");
         }
       } catch (error) {
-        console.error("Token verification failed:", error);
+        console.error("[auth] Token verification exception", error);
         router.push("/register");
       }
     };
@@ -64,7 +66,7 @@ export default function VerifyPhone() {
   }, [dispatch, searchParams, router]);
 
   // Only render the main content if token is verified
-  if (!tokenVerified) {
+  if (!tokenVerified && accessToken.length === 0) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         Verifying your identity...

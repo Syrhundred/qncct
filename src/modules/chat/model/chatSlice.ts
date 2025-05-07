@@ -1,31 +1,31 @@
+/* -------------------------------------------------------------------------- */
+/* chatSlice.ts – реактивный стор для чата                                    */
+/* -------------------------------------------------------------------------- */
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import type { MessageDTO, RoomDTO } from "../api/types";
 
-/* ------------------------------------------------------------------ */
-/* Типы стора                                                          */
-/* ------------------------------------------------------------------ */
+/* ---------- типы под-состояний ---------- */
 interface MessagesState {
   [roomId: string]: MessageDTO[];
 }
 interface TypingState {
   [roomId: string]: {
-    [username: string]: boolean; // true → «печатает»
+    [username: string]: boolean;
   };
 }
 interface RoomsState {
   [roomId: string]: RoomDTO;
 }
 
+/* ---------- shape всего slice ---------- */
 export interface ChatState {
-  rooms: RoomsState; // список комнат
-  messages: MessagesState; // сообщения по roomId
-  typing: TypingState; // map «кто печатает» по roomId
-  totalUnread: number; // суммарный badge на иконке inbox
+  rooms: RoomsState;
+  messages: MessagesState;
+  typing: TypingState;
+  totalUnread: number;
 }
 
-/* ------------------------------------------------------------------ */
-/* initialState                                                        */
-/* ------------------------------------------------------------------ */
+/* ---------- initial ---------- */
 const initialState: ChatState = {
   rooms: {},
   messages: {},
@@ -33,22 +33,17 @@ const initialState: ChatState = {
   totalUnread: 0,
 };
 
-/* ------------------------------------------------------------------ */
-/* Вспомогательная функция: dedup                                      */
-/* ------------------------------------------------------------------ */
-function pushUnique(arr: MessageDTO[], msg: MessageDTO) {
-  if (arr.some((m) => m.id === msg.id)) return;
-  arr.push(msg);
-}
+/* ---------- helpers ---------- */
+const isTmp = (m: MessageDTO) => m.id.startsWith("tmp-");
 
-/* ------------------------------------------------------------------ */
-/* slice                                                               */
-/* ------------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/* slice                                                                      */
+/* -------------------------------------------------------------------------- */
 export const chatSlice = createSlice({
   name: "chat",
   initialState,
   reducers: {
-    /* init: пришёл после подключения к WS -------------------------- */
+    /* инициализация комнат после подключения к WS ------------------------ */
     init(state, action: PayloadAction<RoomDTO[]>) {
       state.totalUnread = 0;
       action.payload.forEach((r) => {
@@ -57,7 +52,7 @@ export const chatSlice = createSlice({
       });
     },
 
-    /* список комнат badge/unread ----------------------------------- */
+    /* обновление badge / preview (получено через WS) --------------------- */
     badge(state, action: PayloadAction<{ roomId: string; unread: number }>) {
       const { roomId, unread } = action.payload;
       const room = state.rooms[roomId];
@@ -67,34 +62,59 @@ export const chatSlice = createSlice({
       room.unread = unread;
     },
 
-    /* история 50 сообщений через REST ------------------------------ */
+    /* REST-история (50 сообщений) ---------------------------------------- */
     historyLoaded(
       state,
       action: PayloadAction<{ roomId: string; msgs: MessageDTO[] }>,
     ) {
       const { roomId, msgs } = action.payload;
-      const arr = (state.messages[roomId] = []);
-      msgs.forEach((m) => pushUnique(arr, m));
+
+      const existing = state.messages[roomId] ?? [];
+      const ids = new Set(existing.map((m) => m.id));
+
+      const merged = [...existing];
+      for (const m of msgs) if (!ids.has(m.id)) merged.push(m);
+
+      state.messages[roomId] = merged;
     },
 
-    /* одно входящее сообщение (WS message или optimistic) ---------- */
+    /* входящее сообщение (WS / optimistic) ------------------------------- */
     incomingMessage(
       state,
       action: PayloadAction<{ roomId: string; msg: MessageDTO }>,
     ) {
       const { roomId, msg } = action.payload;
-      const arr = state.messages[roomId] ?? (state.messages[roomId] = []);
+      const current = state.messages[roomId] ?? [];
 
-      /* ✅ защита от дублей */
-      pushUnique(arr, msg);
+      /* ① убираем tmp-дубль, если пришёл реальный ответ от сервера */
+      if (!isTmp(msg)) {
+        const dupIdx = current.findIndex(
+          (m) =>
+            isTmp(m) &&
+            m.content === msg.content &&
+            Math.abs(Date.parse(m.created_at) - Date.parse(msg.created_at)) <
+              15_000,
+        );
+        if (dupIdx !== -1) current.splice(dupIdx, 1);
+      }
 
-      /* обновляем превью в комнате */
+      /* ② не добавляем, если уже есть (может прийти повторный WS) */
+      if (current.some((m) => m.id === msg.id)) {
+        state.messages[roomId] = [...current];
+        return;
+      }
+
+      /* ③ пишем новый массив, чтобы селекторы «увидели» обновление */
+      state.messages[roomId] = [...current, msg];
+
+      /* ④ обновляем превью и счётчики ---------------------------------- */
       const room = state.rooms[roomId];
       if (room) {
         room.last_msg_preview = {
           content: msg.content,
           created_at: msg.created_at,
         };
+
         if (!msg.is_mine) {
           room.unread += 1;
           state.totalUnread += 1;
@@ -102,7 +122,7 @@ export const chatSlice = createSlice({
       }
     },
 
-    /* состояние «кто печатает» ------------------------------------- */
+    /* «кто печатает» ----------------------------------------------------- */
     typing(
       state,
       action: PayloadAction<{
@@ -117,7 +137,7 @@ export const chatSlice = createSlice({
       else delete map[username];
     },
 
-    /* очистить счётчик после read ---------------------------------- */
+    /* сброс счётчика непрочитанного после read --------------------------- */
     flushRoom(state, action: PayloadAction<{ roomId: string }>) {
       const room = state.rooms[action.payload.roomId];
       if (!room) return;

@@ -1,4 +1,4 @@
-import type { Middleware } from "@reduxjs/toolkit";
+import type { Middleware, Action } from "@reduxjs/toolkit";
 import { socket } from "@/shared/lib/socket";
 import {
   init,
@@ -6,63 +6,189 @@ import {
   incomingMessage,
   typing as typingAction,
 } from "./chatSlice";
+import { chatApi } from "@/modules/chat/api/chatApiSlice";
+import type { RoomDTO, MessageDTO } from "../api/types";
+import type { RootState } from "@/store";
 
+/* ---------- точные типы WS-payload'ов ---------- */
+interface InitEvent {
+  type: "init";
+  rooms: RoomDTO[];
+}
+interface BadgeEvent {
+  type: "badge";
+  room_id: string;
+  unread: number;
+}
+interface TypingEvent {
+  type: "typing";
+  room_id: string;
+  user: { id: string; username: string };
+  state: boolean;
+}
+
+interface MessageEventWS {
+  type: "message";
+  room_id: string;
+  payload: MessageDTO;
+}
+/* «сырой» пакет без type */
+type RawMessageDTO = MessageDTO & { type?: undefined };
+
+/* ---------- расширяем сокет API ---------- */
 interface ChatSocket {
-  /** Подключает веб-сокет с JWT */
   connect(token: string): void;
-  /** Унифицированный метод подписки на сообщения */
   addListener(cb: (e: MessageEvent<string>) => void): void;
-  /** Флаг одноразовой инициализации; выставляем только на клиенте */
+  removeListener?(cb: (e: MessageEvent<string>) => void): void;
   _initialized?: boolean;
 }
 
-export const chatWsMiddleware: Middleware = (store) => (next) => (action) => {
-  if (typeof window === "undefined") return next(action);
+export const chatWsMiddleware: Middleware = (store) => {
+  let handler: ((e: MessageEvent) => void) | null = null;
 
-  const chatSocket = socket as ChatSocket;
+  return (next) => (action) => {
+    if (typeof window === "undefined") return next(action); // SSR skip
 
-  /* однократная инициализация */
-  const token = localStorage.getItem("access_token");
-  if (token && !chatSocket._initialized) {
-    chatSocket.connect(token);
+    const chatSocket = socket as ChatSocket;
+    const token = localStorage.getItem("access_token");
 
-    chatSocket.addListener((e) => {
-      const d = JSON.parse(e.data);
+    if (token && !chatSocket._initialized) {
+      chatSocket.connect(token);
 
-      switch (d.type) {
-        case "init":
-          store.dispatch(init(d.rooms));
-          break;
+      if (handler && chatSocket.removeListener)
+        chatSocket.removeListener(handler);
 
-        case "message":
-          console.debug("[mw] message →", {
-            room: d.room_id,
-            id: d.payload.id,
-            mine: d.payload.is_mine,
-          });
+      handler = (e: MessageEvent) => {
+        let data: unknown;
+        try {
+          data = JSON.parse(e.data as string);
+        } catch {
+          return;
+        }
+
+        /* ---- актуальный id авторизованного юзера ---- */
+        const getAuthId = () =>
+          String((store.getState() as RootState).user.id ?? "");
+        const authId = getAuthId();
+
+        // Для отладки - добавьте эту строку для проверки значений
+        console.debug("[mw] Auth ID:", authId);
+
+        /* ============== type guards + narrow ============== */
+        if (isInitEvent(data)) {
+          store.dispatch(init(data.rooms));
           store.dispatch(
-            incomingMessage({ roomId: d.room_id, msg: d.payload }),
+            chatApi.util.invalidateTags(
+              data.rooms.map((r) => ({
+                type: "History" as const,
+                id: r.room_id,
+              })),
+            ),
           );
-          break;
+          return;
+        }
 
-        case "badge":
-          store.dispatch(badge({ roomId: d.room_id, unread: d.unread }));
-          break;
-
-        case "typing":
+        if (isBadgeEvent(data)) {
+          next(badge({ roomId: data.room_id, unread: data.unread }));
           store.dispatch(
+            chatApi.util.invalidateTags([
+              { type: "History", id: data.room_id },
+            ]),
+          );
+          return;
+        }
+
+        if (isTypingEvent(data)) {
+          next(
             typingAction({
-              roomId: d.room_id,
-              username: d.username,
-              state: d.state,
+              roomId: data.room_id,
+              username: data.user.username,
+              state: data.state,
             }),
           );
-          break;
-      }
-    });
+          return;
+        }
 
-    chatSocket._initialized = true;
-  }
+        if (isMessageEventWS(data)) {
+          // Отладочный лог для проверки ID
+          console.debug("[mw] MessageEventWS payload:", {
+            senderId: data.payload.sender?.id,
+            authId,
+            content: data.payload.content,
+          });
 
-  return next(action);
+          // Исправление: явно приводим ID к строке перед сравнением (если они разных типов)
+          const senderId = String(data.payload.sender?.id);
+          const userAuthId = String(authId);
+          const isMine = senderId === userAuthId;
+
+          const msg: MessageDTO = {
+            ...data.payload,
+            is_mine: isMine,
+          };
+          next(incomingMessage({ roomId: data.room_id, msg }));
+          return;
+        }
+
+        if (isRawDTO(data)) {
+          // Отладочный лог для проверки ID
+          console.debug("[mw] RawDTO payload:", {
+            senderId: data.sender?.id,
+            authId,
+            content: data.content,
+          });
+
+          // Исправление: явно приводим ID к строке перед сравнением
+          const senderId = String(data.sender?.id);
+          const userAuthId = String(authId);
+          const isMine = senderId === userAuthId;
+
+          const msg: MessageDTO = {
+            ...data,
+            is_mine: isMine,
+          };
+          next(incomingMessage({ roomId: msg.room_id, msg }));
+          return;
+        }
+
+        console.debug("[mw] unhandled WS payload:", data);
+      };
+
+      chatSocket.addListener(handler);
+      chatSocket._initialized = true;
+    }
+
+    if ((action as Action).type === "user/logout")
+      chatSocket._initialized = false;
+
+    return next(action);
+  };
 };
+
+/* -------------------------------------------------------------------------- */
+/* type-guard helpers                                                         */
+/* -------------------------------------------------------------------------- */
+function isObject(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null;
+}
+function isInitEvent(v: unknown): v is InitEvent {
+  return isObject(v) && v.type === "init" && Array.isArray(v.rooms);
+}
+function isBadgeEvent(v: unknown): v is BadgeEvent {
+  return isObject(v) && v.type === "badge" && "room_id" in v && "unread" in v;
+}
+function isTypingEvent(v: unknown): v is TypingEvent {
+  return isObject(v) && v.type === "typing" && "username" in v;
+}
+function isMessageEventWS(v: unknown): v is MessageEventWS {
+  return isObject(v) && v.type === "message" && "payload" in v;
+}
+function isRawDTO(v: unknown): v is RawMessageDTO {
+  return (
+    isObject(v) &&
+    "room_id" in v &&
+    "id" in v &&
+    "content" in v &&
+    !("type" in v)
+  );
+}

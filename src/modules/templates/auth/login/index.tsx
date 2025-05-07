@@ -60,7 +60,7 @@ export default function Login() {
       if (isActive === "true") {
         router.replace("/");
       } else {
-        router.push("/complete-registration");
+        router.push("/verify");
       }
     }
   }, [isAuth, router, dispatch, isClient]);
@@ -181,7 +181,7 @@ export default function Login() {
           <div className="flex flex-col items-center gap-3">
             <span className="text-xs text-lightgray">Or continue with</span>
             <Link
-              href={`${process.env.NEXT_PUBLIC_API_BASE_URL || "https://web-production-f0f5.up.railway.app"}/api/v1/auth/google/login`}
+              href={`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/google/login`}
             >
               <Image
                 width={40}
