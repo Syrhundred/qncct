@@ -66,7 +66,9 @@ export const chatWsMiddleware: Middleware = (store) => {
         }
 
         /* ---- актуальный id авторизованного юзера ---- */
-        const authId = (store.getState() as RootState).user.id;
+        const getAuthId = () =>
+          String((store.getState() as RootState).user.id ?? "");
+        const authId = getAuthId();
 
         // Для отладки - добавьте эту строку для проверки значений
         console.debug("[mw] Auth ID:", authId);
