@@ -1,95 +1,76 @@
-import { ReliableSocket } from "./reliableSocket";
-
-// Создаём единый инстанс WebSocket
-export const socket = new ReliableSocket(process.env.NEXT_PUBLIC_WS_URL!);
-
-if (typeof window !== "undefined") {
-  // Функция для восстановления инициализации WS и истории чата
-  const wake = () => {
-    const token = localStorage.getItem("access_token");
-    if (token) {
-      console.info("[chat] Wake-up - ensuring socket connection");
-      socket.connect(token);
-    } else {
-      console.warn("[chat] No token found during WebSocket wake-up");
-    }
-
-    const m = window.location.pathname.match(/^\/chat\/([^/]+)/);
-    if (m) {
-      console.info("[chat] Wake-up - refreshing room history for", m[1]);
-      // Import store dynamically to avoid circular dependency
-      import("@/store").then(({ store }) => {
-        import("@/modules/chat/api/chatApiSlice").then(({ chatApi }) => {
-          store.dispatch(
-            chatApi.endpoints.getHistory.initiate(m[1], {
-              forceRefetch: true,
-              subscribe: false,
-            }),
-          );
-        });
-      });
-    }
-  };
-
-  // При возврате в активную вкладку
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") {
-      console.info("[chat] Tab became visible - waking up");
-      wake();
-    }
-  });
-
-  // При восстановлении сети
-  window.addEventListener("online", () => {
-    console.info("[chat] Network came online - waking up");
-    wake();
-  });
-
-  // 1) Проверяем авторизацию при старте и соединяем, если уже залогинен
-  const checkInitialAuth = async () => {
-    try {
-      // Import store dynamically
-      const { store } = await import("@/store");
-      const userId = store.getState().user.id;
-      if (userId) {
-        const token = localStorage.getItem("access_token");
-        if (token) {
-          console.info("[chat] Initial socket connection (user logged in)");
-          socket.connect(token);
-        }
-      }
-    } catch (error) {
-      console.error("[chat] Error checking initial auth:", error);
-    }
-  };
-  setTimeout(checkInitialAuth, 100);
-
-  // 2) Подписываемся на изменения user.id и соединяем при логине
-  const setupUserSubscription = async () => {
-    try {
-      // Import store dynamically
-      const { store } = await import("@/store");
-      let lastUserId: string | null = null;
-
-      store.subscribe(() => {
-        const userId = store.getState().user.id;
-        if (userId !== lastUserId) {
-          lastUserId = userId;
-          if (userId) {
-            const token = localStorage.getItem("access_token");
-            if (token) {
-              console.info("[chat] User logged in - connecting socket");
-              socket.connect(token);
-            }
-          } else {
-            console.info("[chat] User logged out - disposing socket");
-            socket.dispose();
-          }
-        }
-      });
-    } catch (error) {
-      console.error("[chat] Error setting up user subscription:", error);
-    }
-  };
-  setTimeout(setupUserSubscription, 200); // Slight delay after checkInitialAuth
+interface SocketMessage {
+  type: string;
+  [key: string]: any;
 }
+
+let currentToken = "";
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 5;
+
+export const socket = {
+  ws: null as WebSocket | null,
+  listeners: new Set<(e: MessageEvent) => void>(),
+  connected: false,
+  queue: [] as SocketMessage[],
+
+  connect(token: string) {
+    if (this.connected || token === currentToken) return;
+
+    currentToken = token;
+    this.ws = new WebSocket(`${process.env.NEXT_PUBLIC_WS_URL}?token=${token}`);
+
+    this.ws.onopen = () => {
+      this.connected = true;
+      reconnectAttempts = 0;
+      this.processQueue();
+    };
+
+    this.ws.onmessage = (e) => {
+      this.listeners.forEach((cb) => cb(e));
+    };
+
+    this.ws.onclose = () => {
+      this.connected = false;
+      if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+        setTimeout(
+          () => {
+            reconnectAttempts++;
+            this.connect(token);
+          },
+          Math.min(1000 * reconnectAttempts, 5000),
+        );
+      }
+    };
+  },
+
+  addListener(cb: (e: MessageEvent) => void) {
+    this.listeners.add(cb);
+    return cb;
+  },
+
+  removeListener(cb: (e: MessageEvent) => void) {
+    this.listeners.delete(cb);
+  },
+
+  send(message: SocketMessage): boolean {
+    if (!this.connected) {
+      this.queue.push(message);
+      return false;
+    }
+
+    try {
+      this.ws?.send(JSON.stringify(message));
+      return true;
+    } catch (err) {
+      console.error("WebSocket send error:", err);
+      return false;
+    }
+  },
+
+  processQueue() {
+    while (this.queue.length > 0) {
+      const msg = this.queue.shift();
+      if (msg) this.send(msg);
+    }
+  },
+};

@@ -1,50 +1,60 @@
-import { MessageDTO } from "../api/types";
-import Image from "next/image";
-import clsx from "clsx";
-import dayjs from "dayjs";
+"use client";
 
-const DEFAULT_AVATAR = "/assets/img/profile/default.png";
+import { MessageDTO } from "../api/types";
+import dayjs from "dayjs";
+import clsx from "clsx";
+import Image from "next/image";
 
 export default function MessageBubble({ msg }: { msg: MessageDTO }) {
-  const isMine = msg.is_mine;
-  const avatarSrc = msg.sender.avatar_url || DEFAULT_AVATAR;
+  const isTemporary = msg.id.startsWith("tmp-");
+  const time = dayjs(msg.created_at).format("HH:mm");
 
   return (
     <div
       className={clsx(
-        "flex items-end",
-        isMine ? "justify-end space-x-reverse" : "space-x-2",
+        "flex items-end gap-2 mb-4",
+        msg.is_mine ? "justify-end" : "justify-start",
       )}
     >
-      {!isMine && (
-        <Image
-          src={avatarSrc}
-          alt={msg.sender.username}
-          width={32}
-          height={32}
-          className="h-8 w-8 rounded-full object-cover"
-        />
+      {!msg.is_mine && (
+        <div>
+          <Image
+            src={msg.sender.avatar_url || "/assets/img/profile/default.png"}
+            alt={msg.sender.username}
+            width={32}
+            height={32}
+            className="rounded-full"
+          />
+        </div>
       )}
 
-      <div className="flex flex-col">
-        <div
-          className={clsx(
-            "max-w-[70vw] rounded-2xl px-4 py-3 text-sm leading-snug shadow",
-            isMine
-              ? "bg-gradient text-white shadow-md"
-              : "bg-gray-100 text-gray-800",
-          )}
-        >
-          {msg.content}
-        </div>
+      <div
+        className={clsx(
+          "max-w-[70%] rounded-xl px-4 py-2",
+          msg.is_mine
+            ? "bg-blue-400 text-white"
+            : "bg-gray-100 dark:bg-gray-200 ",
+          isTemporary && "opacity-50",
+        )}
+      >
         <span
           className={clsx(
-            "mt-1 text-[10px]",
-            isMine ? "text-right pr-2 text-gray-300" : "pl-2 text-gray-400",
+            "text-xs",
+            msg.is_mine ? "text-blue-100" : "text-gray-500",
           )}
         >
-          {dayjs(msg.created_at).format("HH:mm")}
+          {msg.sender.username}
         </span>
+
+        <p className="break-words">{msg.content}</p>
+        <p
+          className={clsx(
+            "text-xs mt-1",
+            msg.is_mine ? "text-blue-100" : "text-gray-500",
+          )}
+        >
+          {isTemporary ? "Sending..." : time}
+        </p>
       </div>
     </div>
   );
