@@ -16,8 +16,6 @@ const EXCLUDED_PATHS = ["/_next", "/static", "/api", "/assets", "/favicon.ico"];
 
 /**
  * Middleware function to handle authentication and routing logic
- * @param request - The incoming request
- * @returns NextResponse with appropriate redirect or continuation
  */
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -45,9 +43,9 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // CASE 2: User not activated - redirect to complete registration
+  // CASE 2: User not activated - allow only /verify and /complete-registration
   if (isActive === "false") {
-    if (pathname !== "/verify") {
+    if (!["/verify", "/complete-registration"].includes(pathname)) {
       return NextResponse.redirect(new URL("/verify", request.url));
     }
     return NextResponse.next();
@@ -58,21 +56,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  // CASE 4: Auth token exists and path is valid - proceed
+  // CASE 4: All good
   return NextResponse.next();
 }
 
 // Configure which paths the middleware should run on
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder files (assets, images, etc.)
-     * - API routes (/api/*)
-     */
-    "/((?!_next/static|_next/image|favicon\\.ico|public/|api/).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon\\.ico|public/|api/).*)"],
 };

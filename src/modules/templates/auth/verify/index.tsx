@@ -163,8 +163,6 @@ export default function VerifyPhone() {
                     verification_code: verificationCode,
                   }),
                 ).unwrap();
-                localStorage.setItem("is_active", "true");
-                document.cookie = "is_active=true; path=/; max-age=604800"; // 7 дней
 
                 router.push("/complete-registration");
               } catch (err) {
