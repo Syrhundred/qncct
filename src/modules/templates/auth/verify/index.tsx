@@ -157,12 +157,19 @@ export default function VerifyPhone() {
             onSubmit={async (values, { setSubmitting }) => {
               const verificationCode = values.code.join("");
               try {
-                await dispatch(
+                console.info("[auth] submitting code:", verificationCode);
+                const result = await dispatch(
                   verifyCode({
                     phone_number: phoneNumber,
                     verification_code: verificationCode,
                   }),
                 ).unwrap();
+                console.info("[auth] verifyCode result:", result);
+                console.info(
+                  "[auth] is_active localStorage:",
+                  localStorage.getItem("is_active"),
+                );
+                console.info("[auth] is_active cookie:", document.cookie);
 
                 router.push("/complete-registration");
               } catch (err) {
