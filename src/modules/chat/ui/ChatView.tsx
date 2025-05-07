@@ -14,6 +14,7 @@ import {
   incomingMessage,
   typing,
   removeTmpMessage,
+  flushRoom,
 } from "../model/chatSlice";
 import { socket } from "@/shared/lib/socket";
 import { MessageDTO } from "@/modules/chat/api/types";
@@ -200,6 +201,27 @@ export default function ChatView() {
 
     setInput("");
   }, [roomId, input, user, dispatch, messages]);
+
+  // В эффекте для отметки прочитанных:
+  useEffect(() => {
+    if (!roomId || !messages.length) return;
+
+    // Находим последнее НЕ временное сообщение
+    const lastRealMessage = [...messages]
+      .reverse()
+      .find((m) => !m.id.startsWith("tmp-"));
+    if (!lastRealMessage) return;
+
+    console.debug("[chat] Marking messages as read up to", lastRealMessage.id);
+
+    socket.send({
+      type: "read",
+      room_id: roomId,
+      last_msg_id: lastRealMessage.id,
+    });
+
+    dispatch(flushRoom({ roomId }));
+  }, [messages, roomId, dispatch]);
 
   return (
     <div className="flex h-full flex-col bg-white">

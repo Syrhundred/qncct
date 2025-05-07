@@ -12,8 +12,8 @@ export default function ChatRoomsPageInner() {
 
   return (
     <main className="h-full bg-white">
-      <h1 className="p-3">Chats</h1>
-      <div className="mt-4 max-h-[calc(100vh-250px)] overflow-y-auto px-4">
+      <h2 className="p-3">Chats</h2>
+      <div className="mt-4 overflow-y-auto px-4">
         <ChatRoomsList />
       </div>
     </main>
