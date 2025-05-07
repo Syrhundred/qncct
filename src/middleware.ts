@@ -47,10 +47,8 @@ export function middleware(request: NextRequest) {
 
   // CASE 2: User not activated - redirect to complete registration
   if (isActive === "false") {
-    if (pathname !== "/complete-registration") {
-      return NextResponse.redirect(
-        new URL("/complete-registration", request.url),
-      );
+    if (pathname !== "/verify") {
+      return NextResponse.redirect(new URL("/verify", request.url));
     }
     return NextResponse.next();
   }
