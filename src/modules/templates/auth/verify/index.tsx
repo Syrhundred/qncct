@@ -38,7 +38,6 @@ export default function VerifyPhone() {
   const [verificationError, setVerificationError] = useState("");
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Handle token verification on component mount
   useEffect(() => {
     const verifyUserToken = async () => {
       const token = searchParams.get("token");
@@ -48,14 +47,16 @@ export default function VerifyPhone() {
       }
 
       try {
-        const result = await dispatch(verifyToken(token)).unwrap();
-        if (!result?.token) {
-          router.push("/register");
-        } else {
+        const resultAction = await dispatch(verifyToken(token));
+        if (verifyToken.fulfilled.match(resultAction)) {
+          console.info("[auth] Token verified successfully");
           setTokenVerified(true);
+        } else {
+          console.warn("[auth] Token verification failed", resultAction);
+          router.push("/register");
         }
       } catch (error) {
-        console.error("Token verification failed:", error);
+        console.error("[auth] Token verification exception", error);
         router.push("/register");
       }
     };
