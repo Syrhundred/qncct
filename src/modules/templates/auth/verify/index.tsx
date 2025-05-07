@@ -162,7 +162,7 @@ export default function VerifyPhone() {
                   }),
                 ).unwrap();
 
-                // router.push("/complete-registration");
+                router.push("/complete-registration");
               } catch (err) {
                 setVerificationError(
                   "Invalid verification code. Please try again. " +
