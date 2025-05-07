@@ -1,6 +1,5 @@
 import { ReliableSocket } from "./reliableSocket";
 import { store } from "@/store";
-import { useAppSelector } from "@/shared/lib/storeHooks";
 
 // Создаем экземпляр с улучшенным сокетом
 export const socket = new ReliableSocket(process.env.NEXT_PUBLIC_WS_URL!);
@@ -99,7 +98,7 @@ if (typeof window !== "undefined") {
 
   // Слушаем изменения авторизации пользователя
   store.subscribe(() => {
-    const { isAuth } = useAppSelector((state) => state.auth);
+    const { isAuth } = store.getState().auth;
 
     // Реагируем только на изменения статуса авторизации
     if (lastAuthState !== isAuth) {
