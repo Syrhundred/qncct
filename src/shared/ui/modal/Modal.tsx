@@ -1,4 +1,4 @@
-import SmallButton from "@/modules/shared/ui/button/SmallButton";
+import Button from "@/modules/shared/ui/button/Button";
 
 export default function Modal({
   modalText,
@@ -12,7 +12,7 @@ export default function Modal({
   onConfirm?: () => void;
 }) {
   return (
-    <div className="fixed bg-black bg-opacity-50 top-0 left-0 w-full h-full flex items-center justify-center p-3">
+    <div className="z-50 fixed bg-black bg-opacity-50 top-0 left-0 w-full h-full flex items-center justify-center p-3">
       <div className="w-5/6 flex flex-col gap-6 p-3 bg-white rounded-2xl items-center">
         <h3 className="font-[700]">{modalTitle}</h3>
         <p className="text-center text-xs max-w-[250px] opacity-60 text-secondary">
@@ -25,9 +25,9 @@ export default function Modal({
           >
             Cancel
           </button>
-          <SmallButton
+          <Button
+            className="text-xs w-[150px] py-[13px]"
             onClick={onConfirm}
-            size="w-1/2 py-[13px]"
             buttonText={"Confirm"}
           />
         </div>

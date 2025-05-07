@@ -20,7 +20,7 @@ const Button: React.FC<ButtonProps> = ({
       type={buttonType}
       disabled={state}
       onClick={onClick}
-      className={`${className} w-full bg-gradient rounded-xl text-white text-sm font-semibold p-3 ${state ? "opacity-50 cursor-not-allowed" : ""}`}
+      className={`w-full ${className} bg-gradient rounded-xl text-white text-sm font-semibold p-3 ${state ? "opacity-50 cursor-not-allowed" : ""}`}
     >
       {buttonText}
     </button>

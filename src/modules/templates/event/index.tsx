@@ -233,7 +233,6 @@ export default function Event() {
             />
           )}
 
-          {/* Join / Unjoin / Created */}
           {isOwner ? (
             <div className="w-full text-center bg-gradient text-white font-semibold py-3 rounded-xl mt-4 shadow">
               You have created this event!
