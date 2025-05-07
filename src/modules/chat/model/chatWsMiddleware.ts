@@ -114,8 +114,14 @@ export const chatWsMiddleware: Middleware = (store) => {
               }
               break;
 
-            default:
-              console.debug("[mw] Unhandled message type:", d.type);
+            default: {
+              //  ➜  No `type`, но похоже на MessageDTO
+              if (d && d.room_id && d.id && d.content) {
+                next(incomingMessage({ roomId: d.room_id, msg: d }));
+                return;
+              }
+              console.debug("[mw] Unhandled message:", d);
+            }
           }
         } catch (err) {
           console.error("[mw] Error handling WebSocket message", err, e.data);
