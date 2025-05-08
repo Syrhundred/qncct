@@ -5,6 +5,7 @@ import { IEvent } from "@/shared/types/types";
 import EventCard from "@/shared/ui/event-card/EventCard";
 import { fetchWithAuth } from "@/shared/lib/fetchWithAuth";
 import { Container } from "@/modules/shared/ui/core/Container";
+import BoredButton from "@/shared/ui/bored-button/BoredButton";
 
 export default function TrendingEvents() {
   const [events, setEvents] = useState<IEvent[]>([]);
@@ -30,6 +31,8 @@ export default function TrendingEvents() {
   return (
     <main className="w-full mt-6">
       <Container>
+        <BoredButton />
+
         <h3 className="text-start mb-4">Trending Events</h3>
 
         <div className="flex gap-4 overflow-x-auto pb-2 hide-scrollbar">

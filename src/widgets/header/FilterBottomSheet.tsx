@@ -55,7 +55,6 @@ export default function FilterBottomSheet({
       document.dispatchEvent(
         new CustomEvent("closeBottomSheet", { detail: { id: onCloseId } }),
       );
-      // Dispatch an event when closing for parent components to handle
       document.dispatchEvent(new CustomEvent("filterBottomSheetClosed"));
     });
   };
@@ -82,11 +81,9 @@ export default function FilterBottomSheet({
       params.append("radius_km", "5");
     }
 
-    if (selectedInterests.length > 0) {
-      selectedInterests.forEach((interest) => {
-        params.append("interests", interest);
-      });
-    }
+    selectedInterests.forEach((interest) => {
+      params.append("interests", interest);
+    });
 
     return params.toString();
   };
@@ -97,35 +94,18 @@ export default function FilterBottomSheet({
     const query = buildQueryParams();
     router.push(`/search?${query}`);
 
-    const fetchParams: FetchEventsParams = {};
-
-    if (dateFilter) {
-      fetchParams.date_filter = dateFilter;
-    } else if (selectedDate) {
-      fetchParams.custom_date = toLocalISODate(selectedDate);
-    }
-
-    if (selectedDate) fetchParams.custom_date = toLocalISODate(selectedDate);
-
-    if (selectedLocation) {
-      fetchParams.lat = selectedLocation.coordinates[1];
-      fetchParams.lon = selectedLocation.coordinates[0];
-      fetchParams.radius_km = 5;
-    }
-
-    if (selectedInterests.length > 0) {
-      fetchParams.interests = selectedInterests;
-    }
+    const fetchParams: FetchEventsParams = {
+      ...(dateFilter && { date_filter: dateFilter }),
+      ...(selectedDate && { custom_date: toLocalISODate(selectedDate) }),
+      ...(selectedLocation && {
+        lat: selectedLocation.coordinates[1],
+        lon: selectedLocation.coordinates[0],
+        radius_km: 5,
+      }),
+      ...(selectedInterests.length > 0 && { interests: selectedInterests }),
+    };
 
     dispatch(fetchEvents(fetchParams));
-
-    // Dispatch an event with the updated interests for parent components to use
-    document.dispatchEvent(
-      new CustomEvent("filterInterestsChanged", {
-        detail: { interests: selectedInterests },
-      }),
-    );
-
     handleClose();
   };
 

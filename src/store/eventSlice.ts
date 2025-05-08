@@ -32,9 +32,6 @@ interface FetchEventsParams {
   search?: string;
 }
 
-// Fix: Use Record<string, string> to satisfy URLSearchParams requirements
-type SearchParamsObject = Record<string, string>;
-
 const initialState: EventState = {
   events: [],
   selectedEvent: null,
@@ -89,41 +86,40 @@ export const fetchEvents = createAsyncThunk<IEvent[], FetchEventsParams | void>(
   "event/fetchEvents",
   async (params) => {
     try {
-      const searchParams: SearchParamsObject = {};
+      const searchParams = new URLSearchParams();
 
       if (params) {
-        // Используем либо date_filter, либо custom_date
         if (params.date_filter) {
-          searchParams.date_filter = params.date_filter;
+          searchParams.append("date_filter", params.date_filter);
         } else if (params.custom_date) {
-          searchParams.custom_date = params.custom_date;
+          searchParams.append("custom_date", params.custom_date);
         }
 
         if (params.lat !== undefined) {
-          searchParams.lat = params.lat.toString();
+          searchParams.append("lat", params.lat.toString());
         }
 
         if (params.lon !== undefined) {
-          searchParams.lon = params.lon.toString();
+          searchParams.append("lon", params.lon.toString());
         }
 
         if (params.radius_km !== undefined) {
-          searchParams.radius_km = params.radius_km.toString();
+          searchParams.append("radius_km", params.radius_km.toString());
         }
 
         if (params.search) {
-          searchParams.search = params.search;
+          searchParams.append("search", params.search);
         }
 
         if (params.interests && params.interests.length > 0) {
-          searchParams.interests = params.interests.join(",");
+          for (const interest of params.interests) {
+            searchParams.append("interests", interest);
+          }
         }
       }
 
       const queryString =
-        Object.keys(searchParams).length > 0
-          ? "?" + new URLSearchParams(searchParams).toString()
-          : "";
+        searchParams.toString().length > 0 ? `?${searchParams.toString()}` : "";
 
       const res = await fetch(`${baseUrl}/api/v1/events/filter${queryString}`);
       const data = await res.json();

@@ -202,7 +202,6 @@ export default function ChatView() {
     setInput("");
   }, [roomId, input, user, dispatch, messages]);
 
-  // В эффекте для отметки прочитанных:
   useEffect(() => {
     if (!roomId || !messages.length) return;
 
@@ -229,7 +228,7 @@ export default function ChatView() {
 
       <div
         ref={messageListRef}
-        className="flex-1 space-y-3 overflow-y-auto p-4 pb-32"
+        className="flex-1 space-y-3 overflow-y-auto mt-16 p-4 pb-32"
       >
         {messages.map((m) => (
           <MessageBubble key={m.id} msg={m} />

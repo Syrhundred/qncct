@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { Container } from "@/modules/shared/ui/core/Container";
 import Button from "@/modules/shared/ui/button/Button";
 import Link from "next/link";
+import { toast } from "sonner";
 
 const validationSchema = Yup.object({
   email: Yup.string()
@@ -56,7 +57,9 @@ export default function Register() {
             const result = await dispatch(registerUser(values));
 
             if (registerUser.fulfilled.match(result)) {
-              alert("Registration successful! Redirecting to login...");
+              toast.success(
+                "Account created successfully! Please confirm your email to continue.",
+              );
               router.push("/login");
             }
             setSubmitting(false);
