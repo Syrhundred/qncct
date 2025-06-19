@@ -17,7 +17,6 @@ export default function SearchMap() {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
-  // Add event listeners for the custom events
   useEffect(() => {
     const handleInterestsChanged = (e: CustomEvent) => {
       setSelectedInterests(e.detail.interests);

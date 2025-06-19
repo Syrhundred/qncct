@@ -46,7 +46,7 @@ export default function MessageBubble({ msg }: { msg: MessageDTO }) {
           {msg.sender.username}
         </span>
 
-        <p className="break-words">{msg.content}</p>
+        <p className="break-words text-sm">{msg.content}</p>
         <p
           className={clsx(
             "text-xs mt-1",

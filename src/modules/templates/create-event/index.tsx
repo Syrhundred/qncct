@@ -23,6 +23,7 @@ import { FormikTimePicker } from "@/widgets/create-event/FormikTimePicker";
 import "dayjs/plugin/utc";
 import { useRouter } from "next/navigation";
 import CreateEventSkeleton from "@/shared/ui/skeletons/CreateEventSkeleton";
+import { toast } from "sonner";
 
 dayjs.extend(utc);
 dayjs.locale("ru");
@@ -111,8 +112,8 @@ export default function CreateEvent() {
             );
             dispatch(fetchEvents());
             setTimeout(() => setIsSubmitting(false), 1500);
+            toast.success("Event created successfully.");
             router.push("/");
-            router.refresh();
           }}
         >
           {({ setFieldValue, values, touched, errors }) => (

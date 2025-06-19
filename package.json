@@ -43,6 +43,7 @@
   "devDependencies": {
     "@mui/x-date-pickers": "^7.28.0",
     "@pbe/react-yandex-maps": "^1.2.5",
+    "@svgr/webpack": "^8.1.0",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^20",
     "@types/react": "^18",

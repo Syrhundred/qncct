@@ -12,6 +12,7 @@ import MapContainer from "@/shared/ui/map/MapContainer";
 import { IEvent } from "@/shared/types/types";
 import { LocateFixed } from "lucide-react";
 import EventCard from "@/shared/ui/event-card/EventCard";
+import { useInitUserLocation } from "@/shared/hooks/useInitUserLocation";
 
 export default function GeocodeMap({
   containerSize,
@@ -30,6 +31,8 @@ export default function GeocodeMap({
   const [showEventDetails, setShowEventDetails] = useState(false);
   const [detailsPanelState, setDetailsPanelState] = useState("closed");
   const [activePlacemark, setActivePlacemark] = useState<number | null>(null);
+  const { isAuth } = useAppSelector((state) => state.auth);
+  const refreshLocation = useInitUserLocation(isAuth); // <-- new
 
   const events = useAppSelector((state) => state.event.events);
   const { coords: userCoords, isLoading: isUserLocationLoading } =
@@ -96,9 +99,13 @@ export default function GeocodeMap({
     }, 300);
   };
 
-  const centerOnUserLocation = () => {
-    if (mapRef.current && userCoords) {
-      mapRef.current.setCenter(userCoords, userLocationZoom);
+  const centerOnUserLocation = async () => {
+    const newCoords = await refreshLocation();
+    if (mapRef.current && newCoords) {
+      mapRef.current.setCenter(
+        [newCoords.lat, newCoords.lng],
+        userLocationZoom,
+      );
     }
   };
 
@@ -198,7 +205,6 @@ export default function GeocodeMap({
             })}
       </YandexMap>
 
-      {/* Animations */}
       <style jsx global>{`
         @keyframes pulseMarker {
           0% {
